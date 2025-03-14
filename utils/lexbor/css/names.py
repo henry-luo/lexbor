@@ -249,7 +249,10 @@ styles = {
     "text-decoration-line": {"values": ["none", "underline", "overline", "line-through", "blink"], "initial": "&(lxb_css_property_text_decoration_line_t) {.type = LXB_CSS_TEXT_DECORATION_LINE_NONE}"},
     "text-decoration-style": {"values": ["solid", "double", "dotted", "dashed", "wavy"], "initial": "&(lxb_css_property_text_decoration_style_t) {.type = LXB_CSS_TEXT_DECORATION_STYLE_SOLID}"},
     "text-decoration-color": {"values": [], "initial": "&(lxb_css_property_text_decoration_color_t) {.type = LXB_CSS_COLOR_CURRENTCOLOR}"},
-    "text-decoration": {"values": [], "initial": "&(lxb_css_property_text_decoration_t) {.line = {.type = LXB_CSS_TEXT_DECORATION_LINE_NONE}, .style = {.type = LXB_CSS_TEXT_DECORATION_STYLE_SOLID}, .color = {.type = LXB_CSS_COLOR_CURRENTCOLOR}}"}
+    "text-decoration": {"values": [], "initial": "&(lxb_css_property_text_decoration_t) {.line = {.type = LXB_CSS_TEXT_DECORATION_LINE_NONE}, .style = {.type = LXB_CSS_TEXT_DECORATION_STYLE_SOLID}, .color = {.type = LXB_CSS_COLOR_CURRENTCOLOR}}"},
+
+    # cursor
+    "cursor": {"values": ["hand", "pointer", "text", "wait", "progress", "grab", "grabbing", "move", "auto"], "initial": "&(lxb_css_property_cursor_t) {.type = LXB_CSS_CURSOR_AUTO}"},
 }
 
 compiles = [

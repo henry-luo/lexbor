@@ -1,0 +1,12 @@
+.DS_Store
+*.o
+*.a
+*.dylib
+*.pc
+*.cmake
+CMakeFiles
+CMakeCache.txt
+Makefile
+Testing
+examples
+test

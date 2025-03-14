@@ -261,3 +261,5 @@
 <text-decoration-style> = solid | double | dotted | dashed | wavy
 <text-decoration-color> = <color>
 <text-decoration> = <text-decoration-line> || <text-decoration-style> || <text-decoration-color>/1
+
+<cursor> = [ hand || pointer || text || grab || grabbing ]

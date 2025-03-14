@@ -406,6 +406,9 @@ typedef struct {
 }
 lxb_css_property_text_decoration_t;
 
+typedef struct {
+    lxb_css_cursor_type_t type;
+} lxb_css_property_cursor_t;
 
 LXB_API const lxb_css_entry_data_t *
 lxb_css_property_by_name(const lxb_char_t *name, size_t length);
@@ -1746,6 +1749,16 @@ LXB_API lxb_status_t
 lxb_css_property_text_decoration_serialize(const void *style,
                                            lexbor_serialize_cb_f cb, void *ctx);
 
+/* cursor */
+LXB_API void* lxb_css_property_cursor_create(lxb_css_memory_t *memory);
+
+LXB_API void*
+lxb_css_property_cursor_destroy(lxb_css_memory_t *memory,
+                                 void *style, bool self_destroy);
+
+LXB_API lxb_status_t
+lxb_css_property_cursor_serialize(const void *style,
+                                        lexbor_serialize_cb_f cb, void *ctx);     
 
 #ifdef __cplusplus
 } /* extern "C" */

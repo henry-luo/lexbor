@@ -3169,3 +3169,18 @@ lxb_css_property_text_decoration_serialize(const void *style,
 
     return LXB_STATUS_OK;
 }
+
+LXB_API void* lxb_css_property_cursor_create(lxb_css_memory_t *memory) {
+    return lexbor_mraw_calloc(memory->mraw, sizeof(lxb_css_property_cursor_t));
+}
+
+LXB_API void* lxb_css_property_cursor_destroy(lxb_css_memory_t *memory,
+    void *style, bool self_destroy) {
+    return lxb_css_property__undef_destroy(memory, style, self_destroy);
+}
+
+LXB_API lxb_status_t lxb_css_property_cursor_serialize(const void *style,
+    lexbor_serialize_cb_f cb, void *ctx) {
+    const lxb_css_property_cursor_t *cursor = style;
+    return lxb_css_value_serialize(cursor->type, cb, ctx);
+}

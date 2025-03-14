@@ -5339,3 +5339,39 @@ lsc:
 
     return lxb_css_parser_success(parser);
 }
+
+bool lxb_css_property_state_cursor(lxb_css_parser_t *parser,
+    const lxb_css_syntax_token_t *token, void *ctx) {
+    lxb_css_value_type_t type;
+    lxb_css_rule_declaration_t *declar = ctx;
+
+    if (token->type != LXB_CSS_SYNTAX_TOKEN_IDENT) {
+        return lxb_css_parser_failed(parser);
+    }
+
+    type = lxb_css_value_by_name(lxb_css_syntax_token_ident(token)->data,
+                                 lxb_css_syntax_token_ident(token)->length);
+    switch (type) {
+        /* Global. */
+        case LXB_CSS_VALUE_INITIAL:
+        case LXB_CSS_VALUE_INHERIT:
+        case LXB_CSS_VALUE_UNSET:
+        case LXB_CSS_VALUE_REVERT:
+        /* Local. */
+        case LXB_CSS_VALUE_AUTO:
+        case LXB_CSS_VALUE_HAND:
+        case LXB_CSS_VALUE_POINTER:
+        case LXB_CSS_VALUE_MOVE:
+        case LXB_CSS_VALUE_GRAB:
+        case LXB_CSS_VALUE_GRABBING:
+        case LXB_CSS_VALUE_TEXT:
+        case LXB_CSS_VALUE_WAIT:
+        case LXB_CSS_VALUE_PROGRESS:
+            declar->u.cursor->type = type;
+            break;
+        default:
+            return lxb_css_parser_failed(parser);
+    }
+    lxb_css_syntax_parser_consume(parser);
+    return lxb_css_parser_success(parser);
+}

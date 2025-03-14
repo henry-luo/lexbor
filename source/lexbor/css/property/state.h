@@ -323,6 +323,10 @@ lxb_css_property_state_baseline_shift(lxb_css_parser_t *parser,
 LXB_API bool
 lxb_css_property_state_line_height(lxb_css_parser_t *parser,
                                    const lxb_css_syntax_token_t *token, void *ctx);
+
+LXB_API bool lxb_css_property_state_cursor(lxb_css_parser_t *parser,
+    const lxb_css_syntax_token_t *token, void *ctx);   
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

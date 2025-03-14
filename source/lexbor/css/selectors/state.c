@@ -206,6 +206,36 @@ static const lxb_css_syntax_token_t *
 lxb_css_selectors_state_function_error(lxb_css_parser_t *parser,
                                        const lxb_css_syntax_token_t *token);
 
+static void
+lxb_css_selectors_get_current_rule_and_specificity(lxb_css_parser_t *parser,
+                                                   lxb_css_selector_list_t **rule,
+                                                   uint32_t *specificity)
+{
+    lxb_css_parser_state_t *state = lxb_css_parser_states_current(parser);
+    lxb_css_selectors_t *selectors = parser->selectors;
+
+    if (state != NULL && selectors != NULL && selectors->list_last != NULL) {
+        *rule = selectors->list_last;
+        *specificity = selectors->list_last->specificity;
+    }
+    else {
+        *rule = NULL;
+        *specificity = 0;
+    }
+}
+
+// Example usage within a parsing function
+// static lxb_status_t
+// example_parsing_function(lxb_css_parser_t *parser, const lxb_css_syntax_token_t *token)
+// {
+//     lxb_css_selector_list_t *current_rule;
+//     uint32_t specificity;
+
+//     lxb_css_selectors_get_current_rule_and_specificity(parser, &current_rule, &specificity);
+
+//     // Now you can use current_rule and specificity as needed
+//     // ...existing code...
+// }
 
 lxb_inline bool
 lxb_css_selectors_done(lxb_css_parser_t *parser)
