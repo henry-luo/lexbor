@@ -825,6 +825,34 @@ LXB_API lxb_status_t
 lxb_css_property_border_left_color_serialize(const void *style,
                                              lexbor_serialize_cb_f cb, void *ctx);
 
+/* border-top-width */
+LXB_API void *lxb_css_property_border_top_width_create(lxb_css_memory_t *memory);
+LXB_API void *lxb_css_property_border_top_width_destroy(
+    lxb_css_memory_t *memory, void *style, bool self_destroy);
+LXB_API lxb_status_t lxb_css_property_border_top_width_serialize(
+    const void *style, lexbor_serialize_cb_f cb, void *ctx);
+
+/* border-right-width */
+LXB_API void *lxb_css_property_border_right_width_create(lxb_css_memory_t *memory);
+LXB_API void *lxb_css_property_border_right_width_destroy(
+    lxb_css_memory_t *memory, void *style, bool self_destroy);
+LXB_API lxb_status_t lxb_css_property_border_right_width_serialize(
+    const void *style, lexbor_serialize_cb_f cb, void *ctx);
+
+/* border-bottom-width */
+LXB_API void *lxb_css_property_border_bottom_width_create(lxb_css_memory_t *memory);
+LXB_API void *lxb_css_property_border_bottom_width_destroy(
+    lxb_css_memory_t *memory, void *style, bool self_destroy);
+LXB_API lxb_status_t lxb_css_property_border_bottom_width_serialize(
+    const void *style, lexbor_serialize_cb_f cb, void *ctx);
+
+/* border-left-width */
+LXB_API void *lxb_css_property_border_left_width_create(lxb_css_memory_t *memory);
+LXB_API void *lxb_css_property_border_left_width_destroy(
+    lxb_css_memory_t *memory, void *style, bool self_destroy);
+LXB_API lxb_status_t lxb_css_property_border_left_width_serialize(
+    const void *style, lexbor_serialize_cb_f cb, void *ctx);
+
 /* Background-color. */
 
 LXB_API void *
@@ -836,6 +864,12 @@ lxb_css_property_background_color_destroy(lxb_css_memory_t *memory,
 LXB_API lxb_status_t
 lxb_css_property_background_color_serialize(const void *style,
                                             lexbor_serialize_cb_f cb, void *ctx);
+
+LXB_API void *lxb_css_property_background_create(lxb_css_memory_t *memory);
+LXB_API void *lxb_css_property_background_destroy(
+    lxb_css_memory_t *memory, void *style, bool self_destroy);
+LXB_API lxb_status_t lxb_css_property_background_serialize(
+    const void *style, lexbor_serialize_cb_f cb, void *ctx);
 
 /* Color. */
 

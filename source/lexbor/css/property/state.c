@@ -1954,6 +1954,24 @@ lxb_css_property_state_padding_left(lxb_css_parser_t *parser,
     return lxb_css_property_state_mp_top(parser, token, ctx, false);
 }
 
+bool lxb_css_property_state_border_top_width(
+    lxb_css_parser_t *parser, const lxb_css_syntax_token_t *token, void *ctx) {
+    return lxb_css_property_state_mp_top(parser, token, ctx, false);
+}
+bool lxb_css_property_state_border_right_width(
+    lxb_css_parser_t *parser, const lxb_css_syntax_token_t *token, void *ctx) {
+    return lxb_css_property_state_mp_top(parser, token, ctx, false);
+}
+bool lxb_css_property_state_border_bottom_width(
+    lxb_css_parser_t *parser, const lxb_css_syntax_token_t *token, void *ctx) {
+    return lxb_css_property_state_mp_top(parser, token, ctx, false);
+}
+bool lxb_css_property_state_border_left_width(
+    lxb_css_parser_t *parser, const lxb_css_syntax_token_t *token, void *ctx) {
+    return lxb_css_property_state_mp_top(parser, token, ctx, false);
+}
+
+
 static bool
 lxb_css_property_state_line_width_style_color(lxb_css_parser_t *parser,
                                               const lxb_css_syntax_token_t *token,
@@ -2175,6 +2193,11 @@ bool
 lxb_css_property_state_background_color(lxb_css_parser_t *parser,
                                         const lxb_css_syntax_token_t *token, void *ctx)
 {
+    return lxb_css_property_state_color(parser, token, ctx);
+}
+
+bool lxb_css_property_state_background(lxb_css_parser_t *parser,
+    const lxb_css_syntax_token_t *token, void *ctx) {
     return lxb_css_property_state_color(parser, token, ctx);
 }
 

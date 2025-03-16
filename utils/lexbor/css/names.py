@@ -139,6 +139,13 @@ styles = {
     "border-bottom-color": {"values": [], "initial": "&(lxb_css_property_border_bottom_color_t) {.type = LXB_CSS_COLOR_CURRENTCOLOR}"},
     "border-left-color": {"values": [], "initial": "&(lxb_css_property_border_left_color_t) {.type = LXB_CSS_COLOR_CURRENTCOLOR}"},
 
+    "border-top-width": {"values": [], "initial": "&(lxb_css_value_length_percentage_t) "+ length_percentage_0},
+    "border-right-width": {"values": [], "initial": "&(lxb_css_value_length_percentage_t) " + length_percentage_0},
+    "border-bottom-width": {"values": [], "initial": "&(lxb_css_value_length_percentage_t) " + length_percentage_0},
+    "border-left-width": {"values": [], "initial": "&(lxb_css_value_length_percentage_t) " + length_percentage_0},
+
+    # background: only supports color at the moment
+    "background": {"values": [], "initial": "&(lxb_css_property_background_color_t) {.type = LXB_CSS_COLOR_TRANSPARENT}"},
     "background-color": {"values": [], "initial": "&(lxb_css_property_background_color_t) {.type = LXB_CSS_COLOR_TRANSPARENT}"},
 
     # https://drafts.csswg.org/css-color/

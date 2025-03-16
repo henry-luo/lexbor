@@ -1049,6 +1049,46 @@ lxb_css_property_border_left_color_serialize(const void *style,
     return lxb_css_value_color_serialize(style, cb, ctx);
 }
 
+void *lxb_css_property_border_top_width_create(lxb_css_memory_t *memory) {
+    return lexbor_mraw_calloc(memory->mraw, sizeof(lxb_css_value_length_percentage_t));
+}
+void *lxb_css_property_border_top_width_destroy(lxb_css_memory_t *memory, void *style, bool self_destroy) {
+    return lxb_css_property__undef_destroy(memory, style, self_destroy);
+}
+lxb_status_t lxb_css_property_border_top_width_serialize(const void *style, lexbor_serialize_cb_f cb, void *ctx) {
+    return lxb_css_value_length_percentage_sr(style, cb, ctx);
+}
+
+void *lxb_css_property_border_right_width_create(lxb_css_memory_t *memory) {
+    return lexbor_mraw_calloc(memory->mraw, sizeof(lxb_css_value_length_percentage_t));
+}
+void *lxb_css_property_border_right_width_destroy(lxb_css_memory_t *memory, void *style, bool self_destroy) {
+    return lxb_css_property__undef_destroy(memory, style, self_destroy);
+}
+lxb_status_t lxb_css_property_border_right_width_serialize(const void *style, lexbor_serialize_cb_f cb, void *ctx) {
+    return lxb_css_value_length_percentage_sr(style, cb, ctx);
+}
+
+void *lxb_css_property_border_bottom_width_create(lxb_css_memory_t *memory) {
+    return lexbor_mraw_calloc(memory->mraw, sizeof(lxb_css_value_length_percentage_t));
+}
+void *lxb_css_property_border_bottom_width_destroy(lxb_css_memory_t *memory, void *style, bool self_destroy) {
+    return lxb_css_property__undef_destroy(memory, style, self_destroy);
+}
+lxb_status_t lxb_css_property_border_bottom_width_serialize(const void *style, lexbor_serialize_cb_f cb, void *ctx) {
+    return lxb_css_value_length_percentage_sr(style, cb, ctx);
+}
+
+void *lxb_css_property_border_left_width_create(lxb_css_memory_t *memory) {
+    return lexbor_mraw_calloc(memory->mraw, sizeof(lxb_css_value_length_percentage_t));
+}
+void *lxb_css_property_border_left_width_destroy(lxb_css_memory_t *memory, void *style, bool self_destroy) {
+    return lxb_css_property__undef_destroy(memory, style, self_destroy);
+}
+lxb_status_t lxb_css_property_border_left_width_serialize(const void *style, lexbor_serialize_cb_f cb, void *ctx) {
+    return lxb_css_value_length_percentage_sr(style, cb, ctx);
+}
+
 void *
 lxb_css_property_background_color_create(lxb_css_memory_t *memory)
 {
@@ -1067,6 +1107,20 @@ lxb_status_t
 lxb_css_property_background_color_serialize(const void *style,
                                             lexbor_serialize_cb_f cb, void *ctx)
 {
+    return lxb_css_value_color_serialize(style, cb, ctx);
+}
+
+void *lxb_css_property_background_create(lxb_css_memory_t *memory){
+    return lexbor_mraw_calloc(memory->mraw, sizeof(lxb_css_property_background_color_t));
+}
+
+void *lxb_css_property_background_destroy(
+    lxb_css_memory_t *memory, void *style, bool self_destroy) {
+    return lxb_css_property__undef_destroy(memory, style, self_destroy);
+}
+
+lxb_status_t lxb_css_property_background_serialize(
+    const void *style, lexbor_serialize_cb_f cb, void *ctx) {
     return lxb_css_value_color_serialize(style, cb, ctx);
 }
 
