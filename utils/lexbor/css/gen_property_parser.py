@@ -34,6 +34,27 @@ def parse_values(values_part):
         values.append(f"REPEAT_COMMA:{base_value}:1:0")
         return values
     
+    # Define regex patterns for extracting complex grammar patterns
+    # Pattern for references with possible attributes: <name attr=val ...>
+    ref_pattern = re.compile(r'<([^>]+?)(?:\s+([^>]+))?>')
+    
+    # Pattern for repetition: {min,max} or {exact}
+    repetition_pattern = re.compile(r'\{(\d+)(?:,\s*(\d+))?\}')
+    
+    # Check for complex patterns with both references, attributes and repetition
+    complex_pattern = re.compile(r'(<[^>]+>)(?:\s*\{(\d+)(?:,\s*(\d+))?\})')
+    complex_match = complex_pattern.search(values_part)
+    
+    if complex_match:
+        # Extract the reference part including any attributes
+        reference = complex_match.group(1)
+        min_repeat = int(complex_match.group(2))
+        max_repeat = int(complex_match.group(3)) if complex_match.group(3) else min_repeat
+        
+        # Add as a special repeat indicator with the complete reference
+        values.append(f"REPEAT:{reference}:{min_repeat}:{max_repeat}")
+        return values
+    
     # Check for ? suffix (optional - appears 0 or 1 times)
     if values_part.endswith('?'):
         base_value = values_part[:-1].strip()
@@ -52,9 +73,8 @@ def parse_values(values_part):
         values.append(f"REPEAT:{base_value}:1:0")
         return values
     
-    # Check if we have repetition patterns like {2,4}
-    repetition_pattern = re.compile(r'(.*?)(?:\s*\{(\d+)(?:,\s*(\d+))?\})')
-    repetition_match = repetition_pattern.search(values_part)
+    # Check if we have repetition patterns like {2,4} for simple values
+    repetition_match = re.search(r'([^{]+)\s*\{(\d+)(?:,\s*(\d+))?\}', values_part)
     
     if repetition_match:
         base_value = repetition_match.group(1).strip()
@@ -63,6 +83,7 @@ def parse_values(values_part):
         
         # Add as a special repeat indicator
         values.append(f"REPEAT:{base_value}:{min_repeat}:{max_repeat}")
+        return values
     
     # Handle || pattern (options where at least one must be present, in any order)
     elif '||' in values_part:
@@ -80,11 +101,11 @@ def parse_values(values_part):
             if value:
                 values.append(value)
     
-    # Handle references to other definitions
+    # Handle references to other definitions, including those with attributes
     elif '<' in values_part and '>' in values_part:
-        # Extract referenced types
+        # Extract referenced types with any attributes they have
         for match in re.finditer(r'<([^>]+)>', values_part):
-            values.append(f"<{match.group(1)}>")
+            values.append(match.group(0))  # Add the complete reference including any attributes
         
         # Also extract literal values if present
         for value in re.findall(r'\b([a-z-]+)\b', values_part):
@@ -155,241 +176,185 @@ def generate_repetition_parser(property_name, c_name, repeat_value, min_repeat, 
     # Determine if the repeated value is a reference or a literal
     is_reference = repeat_value.startswith("<") and repeat_value.endswith(">")
     
-    # Define parser functions for various CSS value types
-    value_parsers = {
-        "color": {
-            "type": "color",
-            "func": "lxb_css_property_state_color_handler",
-            "var": "(lxb_css_value_color_t *)&value",
-            "value_type": "color"
-        },
-        "color-handler": {
-            "type": "color",
-            "func": "lxb_css_property_state_color_handler",
-            "var": "(lxb_css_value_color_t *)&value",
-            "value_type": "color"
-        },
-        "length": {
-            "type": "length",
-            "func": "lxb_css_property_state_length",
-            "var": "&value.length",
-            "value_type": "length"
-        },
-        "length-percentage": {
-            "type": "length_percentage",
-            "func": "lxb_css_property_state_length_percentage",
-            "var": "(lxb_css_value_length_percentage_t *)&value",
-            "value_type": "length_percentage"
-        },
-        "percentage": {
-            "type": "percentage",
-            "func": "lxb_css_property_state_percentage",
-            "var": "&value.percentage",
-            "value_type": "percentage"
-        },
-        "image": {
-            "type": "image",
-            "func": "lxb_css_property_state_image",
-            "var": "(lxb_css_value_image_t *)&value",
-            "value_type": "image"
-        },
-        "number": {
-            "type": "number",
-            "func": "lxb_css_property_state_number",
-            "var": "&value.number",
-            "value_type": "number"
-        },
-        "integer": {
-            "type": "integer",
-            "func": "lxb_css_property_state_integer",
-            "var": "&value.integer",
-            "value_type": "integer"
-        },
-        "angle": {
-            "type": "angle",
-            "func": "lxb_css_property_state_angle",
-            "var": "&value.angle",
-            "value_type": "angle"
-        },
-        "time": {
-            "type": "time",
-            "func": "lxb_css_property_state_time",
-            "var": "&value.time",
-            "value_type": "time"
-        },
-        "frequency": {
-            "type": "frequency",
-            "func": "lxb_css_property_state_frequency",
-            "var": "&value.frequency",
-            "value_type": "frequency"
-        },
-        "string": {
-            "type": "string",
-            "func": "lxb_css_property_state_string",
-            "var": "(lxb_css_value_string_t *)&value",
-            "value_type": "string"
-        },
-        "url": {
-            "type": "url",
-            "func": "lxb_css_property_state_url",
-            "var": "(lxb_css_value_url_t *)&value",
-            "value_type": "url"
-        },
-    }
-
-    # Handle pipe-separated values (alternatives)
-    alternatives = []
-    if "|" in repeat_value and not (is_reference):
-        alternatives = [alt.strip() for alt in repeat_value.split("|")]
-        is_reference = False
+    # Extract reference type and attributes if present
+    ref_type = None
+    ref_attributes = {}
     
-    # Set default parser details
-    parser_details = {
-        "type": "unknown",
-        "func": None, 
-        "var": "value",
-        "value_type": "unknown"
-    }
-    
-    # Get parser details based on reference type
     if is_reference:
-        ref_type = repeat_value[1:-1]
-        if ref_type in value_parsers:
-            parser_details = value_parsers[ref_type]
+        # Extract the reference type and any attributes
+        content = repeat_value[1:-1]  # Remove < >
+        parts = re.split(r'\s+(?=\w+=)', content)
+        
+        if parts:
+            ref_type = parts[0]
+            
+            # Parse any attributes
+            for i in range(1, len(parts)):
+                attr_match = re.match(r'(\w+)=(.+)', parts[i])
+                if attr_match:
+                    attr_name = attr_match.group(1)
+                    attr_value = attr_match.group(2)
+                    ref_attributes[attr_name] = attr_value
     
-    # Generate the repetition parsing code
-    code = f"""static bool
-lxb_css_property_state_{c_name}_repeat(lxb_css_parser_t *parser,
-                                     const lxb_css_syntax_token_t *token,
-                                     lxb_css_rule_declaration_t *declar)
+    # Generate the function name for this repetition parser
+    func_name = f"lxb_css_property_state_{c_name}_repeat"
+    
+    # Start building the function
+    func = f"""bool
+{func_name}(lxb_css_parser_t *parser,
+        const lxb_css_syntax_token_t *token, void *ctx)
 {{
-    bool res;
-    int count = 0;
-    lxb_status_t status;
-    lxb_css_value_type_t type;
-    const lxb_css_syntax_token_t *current_token;
-"""
-
-    # Add specific variable declarations based on the value type
-    if parser_details["type"] != "unknown":
-        code += f"    lxb_css_value_{parser_details['value_type']}_t value;\n"
+    bool status;
+    size_t count = 0;
+    lxb_css_rule_declaration_t *declar = ctx;
+    lxb_css_syntax_token_t *saved_token;
+    lxb_css_parser_state_t *saved_state;"""
     
-    code += """    
-    /* Storage for repeated values would be allocated here */
-    /* We're just tracking if we can successfully parse the expected pattern */
-    
-    current_token = token;
-    
-    while (current_token != NULL) {
-        /* Try to parse the repeated value */
-"""
-    
-    # Generate parsing logic based on the repetition value
-    if is_reference and parser_details["func"]:
-        # Reference value with known parser
-        code += f"""        res = {parser_details["func"]}(parser, current_token, {parser_details["var"]}, &status);
-        if (res) {{
-            count++;
-            
-            /* In a real implementation, we would store the value here */
-            
-            current_token = lxb_css_syntax_parser_token(parser);
-"""
-    elif alternatives:
-        # Alternative values
-        code += """        if (current_token->type == LXB_CSS_SYNTAX_TOKEN_IDENT) {
-            lexbor_str_t *str = lxb_css_syntax_token_ident(current_token);
-            bool matched = false;
-            
-            /* Check against all possible alternative values */
-"""
-        for alt in alternatives:
-            code += f"""            if (lxb_css_parser_check_keyword(str->data, str->length, "{alt}")) {{
-                matched = true;
-            }}
-"""
-        code += """            
-            if (matched) {
-                count++;
-                
-                /* Consume the token */
-                lxb_css_syntax_parser_consume(parser);
-                current_token = lxb_css_syntax_parser_token(parser);
-"""
-    else:
-        # Literal value or unknown reference
-        code += """        if (current_token->type == LXB_CSS_SYNTAX_TOKEN_IDENT) {
-            lexbor_str_t *str = lxb_css_syntax_token_ident(current_token);
-            
-            /* Check if it matches our expected value */
-"""
-        # If it's a literal value, match directly
-        if not is_reference:
-            code += f"""            if (lxb_css_parser_check_keyword(str->data, str->length, "{repeat_value}")) {{
-                count++;
-                
-                /* Consume the token */
-                lxb_css_syntax_parser_consume(parser);
-                current_token = lxb_css_syntax_parser_token(parser);
-"""
-        else:
-            # For unknown reference types, try to match based on name
-            code += f"""            /* Unknown reference type: {repeat_value} */
-            /* This is a placeholder for proper parsing logic */
-            type = lxb_css_value_by_name(str->data, str->length);
-            if (type != LXB_CSS_VALUE__UNDEF) {{
-                count++;
-                
-                /* Consume the token */
-                lxb_css_syntax_parser_consume(parser);
-                current_token = lxb_css_syntax_parser_token(parser);
-"""
-    
-    # Common code for comma handling (for all value types)
+    # For comma-separated lists, we need to track the commas
     if comma_separated:
-        code += f"""            
-            /* Check for comma separator */
-            if (count < {max_repeat if max_repeat > 0 else 999} && current_token != NULL) {{
-                if (current_token->type != LXB_CSS_SYNTAX_TOKEN_COMMA) {{
-                    break; /* No comma, end of sequence */
-                }}
-                
-                /* Consume the comma */
-                lxb_css_syntax_parser_consume(parser);
-                current_token = lxb_css_syntax_parser_token(parser);
-            }}
-            
-            continue;
+        func += """
+    bool need_comma = false;
+    """
+    
+    # Create a function to parse a single instance of the repeated value
+    func += """
+    /* Save current parser state */
+    saved_token = lxb_css_syntax_parser_token(parser);
+    saved_state = lxb_css_parser_state(parser);
+    
+    /* Attempt to parse the repetition pattern */
+    while (true) {
+        /* Stop if we've reached the maximum allowed repetitions */"""
+    
+    if max_repeat > 0:
+        func += f"""
+        if (count >= {max_repeat}) {{
+            break;
         }}
-"""
-    else:
-        code += """            
+        """
+    
+    # Handle comma-separated repetition
+    if comma_separated:
+        func += """
+        /* For comma-separated lists, check for comma between values */
+        if (need_comma) {
+            if (token->type != LXB_CSS_SYNTAX_TOKEN_COMMA) {
+                break;
+            }
+            
+            /* Consume the comma and look for next value */
+            lxb_css_syntax_parser_consume(parser);
+            token = lxb_css_syntax_parser_token(parser);
+            need_comma = false;
             continue;
         }
-"""
+        """
     
-    code += """        /* If we get here, we couldn't parse another value of the expected type */
-        break;
+    # Parse the actual value based on its type
+    func += """
+        /* Try to parse the value */
+        """
+    
+    if is_reference:
+        if ref_type == "color":
+            func += """
+        status = lxb_css_property_state_color_handler(parser, token,
+                                       (lxb_css_value_color_t *)&declar->u.""" + c_name + """->values[count],
+                                       NULL);
+        """
+        elif ref_type == "length" or ref_type == "length-percentage":
+            func += """
+        status = lxb_css_property_state_length_percentage(parser, token,
+                                    (lxb_css_value_length_percentage_t *)&declar->u.""" + c_name + """->values[count]);
+        """
+        elif ref_type == "number":
+            func += """
+        status = lxb_css_property_state_number(parser, token, 
+                                &declar->u.""" + c_name + """->values[count].number);
+        if (status) {
+            declar->u.""" + c_name + """->values[count].type = LXB_CSS_VALUE__NUMBER;
+        }
+        """
+        elif ref_type == "integer":
+            func += """
+        status = lxb_css_property_state_integer(parser, token, 
+                                &declar->u.""" + c_name + """->values[count].integer);
+        if (status) {
+            declar->u.""" + c_name + """->values[count].type = LXB_CSS_VALUE__INTEGER;
+        }
+        """
+        else:
+            # Generic reference handler for other types
+            func += """
+        /* Handle reference type: """ + ref_type + """ */
+        /* This is a placeholder - implement specific parsing logic based on the reference type */
+        status = false;
+        """
+    else:
+        # Literal value
+        func += """
+        /* Check for literal value */
+        if (token->type == LXB_CSS_SYNTAX_TOKEN_IDENT) {
+            lxb_css_value_type_t type = lxb_css_value_by_name(lxb_css_syntax_token_ident(token)->data,
+                                                            lxb_css_syntax_token_ident(token)->length);
+            if (type != LXB_CSS_VALUE_UNDEF) {
+                declar->u.""" + c_name + """->values[count].type = type;
+                lxb_css_syntax_parser_consume(parser);
+                status = true;
+            } else {
+                status = false;
+            }
+        } else {
+            status = false;
+        }
+        """
+    
+    # After parsing attempt, check if successful
+    func += """
+        if (!status) {
+            break;
+        }
+        
+        count++;
+        token = lxb_css_syntax_parser_token(parser);
+        """
+    
+    # For comma-separated values, flag that we need a comma next
+    if comma_separated:
+        func += """
+        need_comma = true;
+        """
+    
+    # Close the loop
+    func += """
     }
     
-    /* Check if we have the minimum number of values */
-    if (count < """ + str(min_repeat) + """) {
+    /* Check if we've met the minimum repetition requirement */"""
+    
+    if min_repeat > 0:
+        func += f"""
+    if (count < {min_repeat}) {{
+        /* Restore original parser state */
+        lxb_css_parser_state_set(parser, saved_state);
+        lxb_css_syntax_parser_token_set(parser, saved_token);
         return false;
-    }
+    }}
+    """
+    else:
+        func += """
+    /* Allow zero repetitions, so success even if count is 0 */
+    """
     
-    /* Check if we've exceeded the maximum (if specified) */
-    if (""" + str(max_repeat) + """ > 0 && count > """ + str(max_repeat) + """) {
-        return false;
-    }
-    
-    /* Successfully parsed the repeating pattern */
-    declar->u.""" + c_name + """->type = LXB_CSS_VALUE__COMPLEX;
-    /* In a real implementation, we would store all the parsed values */
+    # Update property structure with the number of values parsed
+    func += """
+    /* Update property structure with the number of values */
+    declar->u.""" + c_name + """->count = count;
+    declar->u.""" + c_name + """->type = LXB_CSS_VALUE__LIST;
     
     return true;
 }"""
     
-    return code
+    return func
 
 def generate_c_function(property_name, values):
     """Generate a C parsing function for a CSS property."""
@@ -399,7 +364,6 @@ def generate_c_function(property_name, values):
     # Extract repetition pattern if present
     repetition_pattern = next((v for v in values if v.startswith("REPEAT:") or v.startswith("REPEAT_COMMA:")), None)
     repetition_func = ""
-    
     if repetition_pattern:
         parts = repetition_pattern.split(":")
         repeat_type = parts[0]  # REPEAT or REPEAT_COMMA
@@ -432,7 +396,6 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
     # Handle complex patterns with || or repetition
     if property_type == "complex":
         pattern_type = next((v for v in values if v.startswith("PATTERN:") or v.startswith("REPEAT:") or v.startswith("REPEAT_COMMA:")), None)
-        
         if pattern_type and (pattern_type.startswith("REPEAT:") or pattern_type.startswith("REPEAT_COMMA:")):
             func = repetition_func + "\n\n" + func + """
     lxb_css_value_type_t type;
@@ -491,7 +454,6 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
     /* For || pattern, we need to match each component in any order */
     /* Implementation would require tracking which components have been matched */
     /* This is a placeholder for a more complex implementation */
-    
     if (!at_least_one_matched) {{
         return lxb_css_parser_failed(parser);
     }}
@@ -526,7 +488,6 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
     
     return lxb_css_parser_failed(parser);
 }"""
-            
         return func
     
     # Handle different property types
@@ -537,25 +498,6 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
     lxb_css_value_type_t type;
     lxb_css_rule_declaration_t *declar = ctx;
 
-    if (token->type == LXB_CSS_SYNTAX_TOKEN_IDENT) {
-        type = lxb_css_value_by_name(lxb_css_syntax_token_ident(token)->data,
-                                     lxb_css_syntax_token_ident(token)->length);
-        switch (type) {
-            /* Global. */
-            case LXB_CSS_VALUE_INITIAL:
-            case LXB_CSS_VALUE_INHERIT:
-            case LXB_CSS_VALUE_UNSET:
-            case LXB_CSS_VALUE_REVERT:
-                declar->u.""" + c_name + """->type = type;
-
-                lxb_css_syntax_parser_consume(parser);
-                return lxb_css_parser_success(parser);
-
-            default:
-                break;
-        }
-    }
-
     res = lxb_css_property_state_color_handler(parser, token,
                                   (lxb_css_value_color_t *)declar->u.""" + c_name + """,
                                   &status);
@@ -565,67 +507,25 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
 
     return lxb_css_parser_success(parser);
 }"""
-
     elif property_type == "length_percentage":
         func += """
     bool res;
     lxb_css_value_type_t type;
     lxb_css_rule_declaration_t *declar = ctx;
 
-    if (token->type == LXB_CSS_SYNTAX_TOKEN_IDENT) {
-        type = lxb_css_value_by_name(lxb_css_syntax_token_ident(token)->data,
-                                     lxb_css_syntax_token_ident(token)->length);
-        switch (type) {
-            /* Global. */
-            case LXB_CSS_VALUE_INITIAL:
-            case LXB_CSS_VALUE_INHERIT:
-            case LXB_CSS_VALUE_UNSET:
-            case LXB_CSS_VALUE_REVERT:
-                declar->u.""" + c_name + """->type = type;
-                break;
-
-            default:
-                return lxb_css_parser_failed(parser);
-        }
-
-        lxb_css_syntax_parser_consume(parser);
-        return lxb_css_parser_success(parser);
-    }
-
     res = lxb_css_property_state_length_percentage(parser, token,
-                                                 (lxb_css_value_length_percentage_t *)declar->u.user);
+                                                 (lxb_css_value_length_percentage_t *)declar->u.""" + c_name + """);
     if (!res) {
         return lxb_css_parser_failed(parser);
     }
 
     return lxb_css_parser_success(parser);
 }"""
-
     elif property_type == "length":
         func += """
     bool res;
     lxb_css_value_type_t type;
     lxb_css_rule_declaration_t *declar = ctx;
-
-    if (token->type == LXB_CSS_SYNTAX_TOKEN_IDENT) {
-        type = lxb_css_value_by_name(lxb_css_syntax_token_ident(token)->data,
-                                     lxb_css_syntax_token_ident(token)->length);
-        switch (type) {
-            /* Global. */
-            case LXB_CSS_VALUE_INITIAL:
-            case LXB_CSS_VALUE_INHERIT:
-            case LXB_CSS_VALUE_UNSET:
-            case LXB_CSS_VALUE_REVERT:
-                declar->u.""" + c_name + """->type = type;
-                break;
-
-            default:
-                return lxb_css_parser_failed(parser);
-        }
-
-        lxb_css_syntax_parser_consume(parser);
-        return lxb_css_parser_success(parser);
-    }
 
     res = lxb_css_property_state_length(parser, token, &declar->u.""" + c_name + """->length);
     if (res) {
@@ -635,7 +535,6 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
 
     return lxb_css_parser_failed(parser);
 }"""
-
     elif property_type == "number":
         func += """
     bool res;
@@ -648,29 +547,8 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
         return lxb_css_parser_success(parser);
     }
 
-    if (token->type != LXB_CSS_SYNTAX_TOKEN_IDENT) {
-        return lxb_css_parser_failed(parser);
-    }
-
-    type = lxb_css_value_by_name(lxb_css_syntax_token_ident(token)->data,
-                                 lxb_css_syntax_token_ident(token)->length);
-    switch (type) {
-        /* Global. */
-        case LXB_CSS_VALUE_INITIAL:
-        case LXB_CSS_VALUE_INHERIT:
-        case LXB_CSS_VALUE_UNSET:
-        case LXB_CSS_VALUE_REVERT:
-            declar->u.""" + c_name + """->type = type;
-            break;
-
-        default:
-            return lxb_css_parser_failed(parser);
-    }
-
-    lxb_css_syntax_parser_consume(parser);
-    return lxb_css_parser_success(parser);
+    return lxb_css_parser_failed(parser);
 }"""
-
     elif property_type == "integer":
         func += """
     bool res;
@@ -683,29 +561,8 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
         return lxb_css_parser_success(parser);
     }
 
-    if (token->type != LXB_CSS_SYNTAX_TOKEN_IDENT) {
-        return lxb_css_parser_failed(parser);
-    }
-
-    type = lxb_css_value_by_name(lxb_css_syntax_token_ident(token)->data,
-                                 lxb_css_syntax_token_ident(token)->length);
-    switch (type) {
-        /* Global. */
-        case LXB_CSS_VALUE_INITIAL:
-        case LXB_CSS_VALUE_INHERIT:
-        case LXB_CSS_VALUE_UNSET:
-        case LXB_CSS_VALUE_REVERT:
-            declar->u.""" + c_name + """->type = type;
-            break;
-
-        default:
-            return lxb_css_parser_failed(parser);
-    }
-
-    lxb_css_syntax_parser_consume(parser);
-    return lxb_css_parser_success(parser);
+    return lxb_css_parser_failed(parser);
 }"""
-
     elif property_type == "angle":
         func += """
     bool res;
@@ -718,29 +575,8 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
         return lxb_css_parser_success(parser);
     }
 
-    if (token->type != LXB_CSS_SYNTAX_TOKEN_IDENT) {
-        return lxb_css_parser_failed(parser);
-    }
-
-    type = lxb_css_value_by_name(lxb_css_syntax_token_ident(token)->data,
-                                 lxb_css_syntax_token_ident(token)->length);
-    switch (type) {
-        /* Global. */
-        case LXB_CSS_VALUE_INITIAL:
-        case LXB_CSS_VALUE_INHERIT:
-        case LXB_CSS_VALUE_UNSET:
-        case LXB_CSS_VALUE_REVERT:
-            declar->u.""" + c_name + """->type = type;
-            break;
-
-        default:
-            return lxb_css_parser_failed(parser);
-    }
-
-    lxb_css_syntax_parser_consume(parser);
-    return lxb_css_parser_success(parser);
+    return lxb_css_parser_failed(parser);
 }"""
-
     elif property_type == "enum":
         func += """
     lxb_css_value_type_t type;
@@ -758,34 +594,16 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
         case LXB_CSS_VALUE_INHERIT:
         case LXB_CSS_VALUE_UNSET:
         case LXB_CSS_VALUE_REVERT:
-        /* Local. */
-"""
-        # Add cases for each value
-        for value in values:
-            # Skip special value types like <color>
-            if value.startswith("<") and value.endswith(">"):
-                continue
-            
-            if value == "auto":
-                enum_value = f"LXB_CSS_VALUE_AUTO"
-            else:
-                value_c = value.upper().replace('-', '_')
-                enum_value = f"LXB_CSS_{c_name.upper()}_{value_c}"
-            
-            func += f"        case {enum_value}:\n"
-        
-        func += f"""            declar->u.{c_name}->type = type;
+            declar->u.""" + c_name + """->type = type;
             break;
 
         default:
             return lxb_css_parser_failed(parser);
-    }}
+    }
 
     lxb_css_syntax_parser_consume(parser);
-
     return lxb_css_parser_success(parser);
-}}"""
-
+}"""
     else:
         func += """
     /* This property has a complex value type and requires custom handling */
@@ -806,13 +624,11 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
                 lxb_css_syntax_parser_consume(parser);
                 return lxb_css_parser_success(parser);
                 
-            /* Add property-specific cases here */
+            /* Property-specific values would be here */
             default:
                 break;
         }
     }
-    
-    /* Additional property-specific parsing logic should be implemented here */
     
     return lxb_css_parser_failed(parser);
 }"""
@@ -820,22 +636,99 @@ lxb_css_property_state_{c_name}(lxb_css_parser_t *parser,
     return func
 
 def main():
-    if len(sys.argv) != 2:
-        print(f"Usage: {sys.argv[0]} <css_property_name>")
+    # Use absolute path derived from the script location for better reliability
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    output_path = os.path.normpath(os.path.join(script_dir, "../../../source/lexbor/css/property/state_new.c"))
+    
+    if len(sys.argv) < 2:
+        print(f"Usage: {sys.argv[0]} <css_property_name>|all")
         sys.exit(1)
     
-    property_name = sys.argv[1]
+    # Create header content for the C file
+    c_header = """/*
+ * Copyright (C) 2018-2023 Alexander Borisov
+ *
+ * Author: Alexander Borisov <borisov@lexbor.com>
+ */
+
+#include "lexbor/property/state.h"
+#include "lexbor/css/syntax/parser.h"
+#include "lexbor/css/syntax/state.h"
+#include "lexbor/css/value.h"
+
+/* Auto-generated code for CSS property parsers */
+
+"""
     
-    property_name, values_part = load_grammar_rule(property_name)
-    if not property_name:
+    # Initialize the output content with the header
+    output_content = c_header
+    
+    # Process one property or all properties
+    if sys.argv[1].lower() == "all":
+        # Process all properties defined in the grammar file
+        processed_count = 0
+        with open(GRAMMAR_FILE, 'r') as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith('//') or line.startswith('/*'):
+                    continue
+                    
+                match = re.match(r'<([^>]+)>\s*=\s*(.*)', line)
+                if match:
+                    property_name = match.group(1)
+                    values_part = match.group(2)
+                    
+                    try:
+                        # Skip common types definitions, only process actual CSS properties
+                        if property_name in ["color", "length", "angle", "number", "integer"]:
+                            continue
+                        
+                        values = parse_values(values_part)
+                        function = generate_c_function(property_name, values)
+                        
+                        # Add the function to the output with a separator for readability
+                        output_content += f"\n/* Property: {property_name} */\n"
+                        output_content += function + "\n\n"
+                        processed_count += 1
+                    except Exception as e:
+                        print(f"Error processing property '{property_name}': {str(e)}")
+        
+        print(f"Successfully processed {processed_count} properties.")
+    else:
+        # Process single property
+        property_name = sys.argv[1]
+        
+        property_name, values_part = load_grammar_rule(property_name)
+        if not property_name:
+            sys.exit(1)
+        
+        values = parse_values(values_part)
+        if not values:
+            print(f"Warning: No values found for property '{property_name}'")
+        
+        function = generate_c_function(property_name, values)
+        
+        # Add the function to the output
+        output_content += f"/* Property: {property_name} */\n"
+        output_content += function
+    
+    # Ensure the output directory exists
+    output_dir = os.path.dirname(output_path)
+    try:
+        os.makedirs(output_dir, exist_ok=True)
+        print(f"Output directory ensured: {output_dir}")
+    except Exception as e:
+        print(f"Error creating output directory: {str(e)}")
         sys.exit(1)
     
-    values = parse_values(values_part)
-    if not values:
-        print(f"Warning: No values found for property '{property_name}'")
-    
-    function = generate_c_function(property_name, values)
-    print(function)
+    # Write the output to file
+    try:
+        with open(output_path, 'w') as f:
+            f.write(output_content)
+        print(f"Successfully wrote CSS property parser code to: {output_path}")
+    except Exception as e:
+        print(f"Error writing to output file: {str(e)}")
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()
