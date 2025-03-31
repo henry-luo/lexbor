@@ -410,6 +410,29 @@ typedef struct {
     lxb_css_cursor_type_t type;
 } lxb_css_property_cursor_t;
 
+typedef struct {
+    lxb_css_border_style_type_t type;
+} lxb_css_property_border_top_style_t;
+
+typedef struct {
+    lxb_css_border_style_type_t type;
+} lxb_css_property_border_right_style_t;
+
+typedef struct {
+    lxb_css_border_style_type_t type;
+} lxb_css_property_border_bottom_style_t;
+
+typedef struct {
+    lxb_css_border_style_type_t type;
+} lxb_css_property_border_left_style_t;
+
+typedef struct {
+    lxb_css_border_style_type_t top;
+    lxb_css_border_style_type_t right;
+    lxb_css_border_style_type_t bottom;
+    lxb_css_border_style_type_t left;
+} lxb_css_property_border_style_t;
+
 LXB_API const lxb_css_entry_data_t *
 lxb_css_property_by_name(const lxb_char_t *name, size_t length);
 
@@ -1793,6 +1816,66 @@ lxb_css_property_cursor_destroy(lxb_css_memory_t *memory,
 LXB_API lxb_status_t
 lxb_css_property_cursor_serialize(const void *style,
                                         lexbor_serialize_cb_f cb, void *ctx);     
+
+/* Border-style. */
+LXB_API void *
+lxb_css_property_border_style_create(lxb_css_memory_t *memory);
+
+LXB_API void *
+lxb_css_property_border_style_destroy(lxb_css_memory_t *memory,
+                                     void *style, bool self_destroy);
+
+LXB_API lxb_status_t
+lxb_css_property_border_style_serialize(const void *style,
+                                       lexbor_serialize_cb_f cb, void *ctx);
+
+/* Border-top-style. */
+LXB_API void *
+lxb_css_property_border_top_style_create(lxb_css_memory_t *memory);
+
+LXB_API void *
+lxb_css_property_border_top_style_destroy(lxb_css_memory_t *memory,
+                                         void *style, bool self_destroy);
+
+LXB_API lxb_status_t
+lxb_css_property_border_top_style_serialize(const void *style,
+                                           lexbor_serialize_cb_f cb, void *ctx);
+
+/* Border-right-style. */
+LXB_API void *
+lxb_css_property_border_right_style_create(lxb_css_memory_t *memory);
+
+LXB_API void *
+lxb_css_property_border_right_style_destroy(lxb_css_memory_t *memory,
+                                           void *style, bool self_destroy);
+
+LXB_API lxb_status_t
+lxb_css_property_border_right_style_serialize(const void *style,
+                                             lexbor_serialize_cb_f cb, void *ctx);
+
+/* Border-bottom-style. */
+LXB_API void *
+lxb_css_property_border_bottom_style_create(lxb_css_memory_t *memory);
+
+LXB_API void *
+lxb_css_property_border_bottom_style_destroy(lxb_css_memory_t *memory,
+                                            void *style, bool self_destroy);
+
+LXB_API lxb_status_t
+lxb_css_property_border_bottom_style_serialize(const void *style,
+                                              lexbor_serialize_cb_f cb, void *ctx);
+
+/* Border-left-style. */
+LXB_API void *
+lxb_css_property_border_left_style_create(lxb_css_memory_t *memory);
+
+LXB_API void *
+lxb_css_property_border_left_style_destroy(lxb_css_memory_t *memory,
+                                          void *style, bool self_destroy);
+
+LXB_API lxb_status_t
+lxb_css_property_border_left_style_serialize(const void *style,
+                                            lexbor_serialize_cb_f cb, void *ctx);
 
 #ifdef __cplusplus
 } /* extern "C" */

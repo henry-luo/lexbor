@@ -1,4 +1,3 @@
-
 import sys, re, os, datetime
 
 # Find and append run script run dir to module search path
@@ -133,6 +132,9 @@ styles = {
     "border-right": {"values": border_values, "initial": "&(lxb_css_property_border_right_t) " + border_init},
     "border-bottom": {"values": border_values, "initial": "&(lxb_css_property_border_bottom_t) " + border_init},
     "border-left": {"values": border_values, "initial": "&(lxb_css_property_border_left_t) " + border_init},
+
+    "border-style": {"values": ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"], 
+        "initial": "&(lxb_css_property_border_style_t) {.top = LXB_CSS_BORDER_STYLE_NONE, .right = LXB_CSS_BORDER_STYLE_NONE, .bottom = LXB_CSS_BORDER_STYLE_NONE, .left = LXB_CSS_BORDER_STYLE_NONE}"},
 
     "border-top-color": {"values": [], "initial": "&(lxb_css_property_border_top_color_t) {.type = LXB_CSS_COLOR_CURRENTCOLOR}"},
     "border-right-color": {"values": [], "initial": "&(lxb_css_property_border_right_color_t) {.type = LXB_CSS_COLOR_CURRENTCOLOR}"},

@@ -1971,6 +1971,58 @@ bool lxb_css_property_state_border_left_width(
     return lxb_css_property_state_mp_top(parser, token, ctx, false);
 }
 
+bool
+lxb_css_property_state_border_style(lxb_css_parser_t *parser,
+                                   const lxb_css_syntax_token_t *token, void *ctx)
+{
+    lxb_css_value_type_t type;
+    lxb_css_rule_declaration_t *declar = ctx;
+    lxb_css_property_border_style_t *bs = declar->u.border_style;
+
+    if (token->type != LXB_CSS_SYNTAX_TOKEN_IDENT) {
+        return lxb_css_parser_failed(parser);
+    }
+
+    type = lxb_css_value_by_name(lxb_css_syntax_token_ident(token)->data,
+                                 lxb_css_syntax_token_ident(token)->length);
+    
+    switch (type) {
+        /* Global. */
+        case LXB_CSS_VALUE_INITIAL:
+        case LXB_CSS_VALUE_INHERIT:
+        case LXB_CSS_VALUE_UNSET:
+        case LXB_CSS_VALUE_REVERT:
+            bs->top = type;
+            bs->right = type;
+            bs->bottom = type;
+            bs->left = type;
+            break;
+
+        /* Local. */
+        case LXB_CSS_BORDER_STYLE_NONE:
+        case LXB_CSS_BORDER_STYLE_HIDDEN:
+        case LXB_CSS_BORDER_STYLE_DOTTED:
+        case LXB_CSS_BORDER_STYLE_DASHED:
+        case LXB_CSS_BORDER_STYLE_SOLID:
+        case LXB_CSS_BORDER_STYLE_DOUBLE:
+        case LXB_CSS_BORDER_STYLE_GROOVE:
+        case LXB_CSS_BORDER_STYLE_RIDGE:
+        case LXB_CSS_BORDER_STYLE_INSET:
+        case LXB_CSS_BORDER_STYLE_OUTSET:
+            bs->top = type;
+            bs->right = type;
+            bs->bottom = type;
+            bs->left = type;
+            break;
+
+        default:
+            return lxb_css_parser_failed(parser);
+    }
+
+    lxb_css_syntax_parser_consume(parser);
+
+    return lxb_css_parser_success(parser);
+}
 
 static bool
 lxb_css_property_state_line_width_style_color(lxb_css_parser_t *parser,

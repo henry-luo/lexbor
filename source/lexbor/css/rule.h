@@ -202,6 +202,7 @@ struct lxb_css_rule_declaration {
         lxb_css_property_text_decoration_color_t *text_decoration_color;
         lxb_css_property_text_decoration_t       *text_decoration;
         lxb_css_property_cursor_t                *cursor;
+        lxb_css_property_border_style_t          *border_style;
         void                                     *user;
     } u;
 
