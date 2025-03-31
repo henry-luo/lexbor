@@ -203,6 +203,10 @@ struct lxb_css_rule_declaration {
         lxb_css_property_text_decoration_t       *text_decoration;
         lxb_css_property_cursor_t                *cursor;
         lxb_css_property_border_style_t          *border_style;
+        lxb_css_property_border_top_style_t      *border_top_style; 
+        lxb_css_property_border_right_style_t    *border_right_style;
+        lxb_css_property_border_bottom_style_t   *border_bottom_style;
+        lxb_css_property_border_left_style_t     *border_left_style;
         void                                     *user;
     } u;
 
