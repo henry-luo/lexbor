@@ -1975,51 +1975,96 @@ bool
 lxb_css_property_state_border_style(lxb_css_parser_t *parser,
                                    const lxb_css_syntax_token_t *token, void *ctx)
 {
+    unsigned int state;
     lxb_css_value_type_t type;
     lxb_css_rule_declaration_t *declar = ctx;
     lxb_css_property_border_style_t *bs = declar->u.border_style;
+    lxb_css_value_type_t values[4] = {0}; // Store up to 4 values
+    unsigned int count = 0;
 
-    if (token->type != LXB_CSS_SYNTAX_TOKEN_IDENT) {
-        return lxb_css_parser_failed(parser);
+    // Process all provided values first
+    while (token != NULL && token->type != LXB_CSS_SYNTAX_TOKEN__END && count < 4) {
+        if (token->type != LXB_CSS_SYNTAX_TOKEN_IDENT) {
+            return lxb_css_parser_failed(parser);
+        }
+
+        type = lxb_css_value_by_name(lxb_css_syntax_token_ident(token)->data,
+                                    lxb_css_syntax_token_ident(token)->length);
+        
+        // Check if value is valid
+        switch (type) {
+            /* Global. */
+            case LXB_CSS_VALUE_INITIAL:
+            case LXB_CSS_VALUE_INHERIT:
+            case LXB_CSS_VALUE_UNSET:
+            case LXB_CSS_VALUE_REVERT:
+                // Global values can only be used alone
+                if (count > 0) {
+                    return lxb_css_parser_failed(parser);
+                }
+                bs->top = type;
+                bs->right = type;
+                bs->bottom = type;
+                bs->left = type;
+                lxb_css_syntax_parser_consume(parser);
+                return lxb_css_parser_success(parser);
+
+            /* Local. */
+            case LXB_CSS_BORDER_STYLE_NONE:
+            case LXB_CSS_BORDER_STYLE_HIDDEN:
+            case LXB_CSS_BORDER_STYLE_DOTTED:
+            case LXB_CSS_BORDER_STYLE_DASHED:
+            case LXB_CSS_BORDER_STYLE_SOLID:
+            case LXB_CSS_BORDER_STYLE_DOUBLE:
+            case LXB_CSS_BORDER_STYLE_GROOVE:
+            case LXB_CSS_BORDER_STYLE_RIDGE:
+            case LXB_CSS_BORDER_STYLE_INSET:
+            case LXB_CSS_BORDER_STYLE_OUTSET:
+                values[count++] = type;
+                break;
+
+            default:
+                return lxb_css_parser_failed(parser);
+        }
+
+        lxb_css_syntax_parser_consume(parser);
+        token = lxb_css_syntax_parser_token_wo_ws(parser);
+        lxb_css_property_state_check_token(parser, token);
     }
 
-    type = lxb_css_value_by_name(lxb_css_syntax_token_ident(token)->data,
-                                 lxb_css_syntax_token_ident(token)->length);
-    
-    switch (type) {
-        /* Global. */
-        case LXB_CSS_VALUE_INITIAL:
-        case LXB_CSS_VALUE_INHERIT:
-        case LXB_CSS_VALUE_UNSET:
-        case LXB_CSS_VALUE_REVERT:
-            bs->top = type;
-            bs->right = type;
-            bs->bottom = type;
-            bs->left = type;
+    // Apply the values according to CSS box model rules
+    switch (count) {
+        case 1: // One value - apply to all sides
+            bs->top = values[0];
+            bs->right = values[0];
+            bs->bottom = values[0];
+            bs->left = values[0];
             break;
-
-        /* Local. */
-        case LXB_CSS_BORDER_STYLE_NONE:
-        case LXB_CSS_BORDER_STYLE_HIDDEN:
-        case LXB_CSS_BORDER_STYLE_DOTTED:
-        case LXB_CSS_BORDER_STYLE_DASHED:
-        case LXB_CSS_BORDER_STYLE_SOLID:
-        case LXB_CSS_BORDER_STYLE_DOUBLE:
-        case LXB_CSS_BORDER_STYLE_GROOVE:
-        case LXB_CSS_BORDER_STYLE_RIDGE:
-        case LXB_CSS_BORDER_STYLE_INSET:
-        case LXB_CSS_BORDER_STYLE_OUTSET:
-            bs->top = type;
-            bs->right = type;
-            bs->bottom = type;
-            bs->left = type;
+            
+        case 2: // Two values - top/bottom, right/left
+            bs->top = values[0];
+            bs->right = values[1];
+            bs->bottom = values[0];
+            bs->left = values[1];
             break;
-
-        default:
+            
+        case 3: // Three values - top, right/left, bottom
+            bs->top = values[0];
+            bs->right = values[1];
+            bs->bottom = values[2];
+            bs->left = values[1];
+            break;
+            
+        case 4: // Four values - top, right, bottom, left
+            bs->top = values[0];
+            bs->right = values[1];
+            bs->bottom = values[2];
+            bs->left = values[3];
+            break;
+            
+        default: // No values provided
             return lxb_css_parser_failed(parser);
     }
-
-    lxb_css_syntax_parser_consume(parser);
 
     return lxb_css_parser_success(parser);
 }
