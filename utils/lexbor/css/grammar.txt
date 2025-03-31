@@ -263,3 +263,164 @@
 <text-decoration> = <text-decoration-line> || <text-decoration-style> || <text-decoration-color>/1
 
 <cursor> = [ hand || pointer || text || grab || grabbing ]
+
+
+
+/* CSS Level 3 Additional Properties Grammar */
+
+/* ----- Backgrounds and Borders ----- */
+<background-image> = none | <image>#
+<background-size> = [ <length-percentage> | auto ]{1,2} | cover | contain
+<background-repeat> = repeat-x | repeat-y | [ repeat | space | round | no-repeat ]{1,2}
+<background-attachment> = scroll | fixed | local
+<background-origin> = border-box | padding-box | content-box
+<background-clip> = border-box | padding-box | content-box | text
+<background-position> = [ [ left | center | right | <length-percentage> ] [ top | center | bottom | <length-percentage> ]? ] | [ [ left | center | right ] || [ top | center | bottom ] ] | [ <length-percentage> <length-percentage> ]
+
+<border-radius> = <length-percentage min=0>{1,4} [ / <length-percentage min=0>{1,4} ]?
+<border-top-left-radius> = <length-percentage min=0> <length-percentage min=0>?
+<border-top-right-radius> = <length-percentage min=0> <length-percentage min=0>?
+<border-bottom-right-radius> = <length-percentage min=0> <length-percentage min=0>?
+<border-bottom-left-radius> = <length-percentage min=0> <length-percentage min=0>?
+
+<border-image-source> = none | <image>
+<border-image-slice> = [<number min=0> | <percentage min=0>]{1,4} && fill?
+<border-image-width> = [ <length min=0> | <percentage min=0> | <number min=0> | auto ]{1,4}
+<border-image-outset> = [ <length min=0> | <number min=0> ]{1,4}
+<border-image-repeat> = [ stretch | repeat | round | space ]{1,2}
+<border-image> = <border-image-source> || <border-image-slice> [ / <border-image-width>? [ / <border-image-outset> ]? ]? || <border-image-repeat>
+
+<outline-style> = none | hidden | dotted | dashed | solid | double | groove | ridge | inset | outset
+<outline-width> = thin | medium | thick | <length min=0>
+<outline-color> = <color> | invert
+<outline> = <outline-width> || <outline-style> || <outline-color>
+<outline-offset> = <length>
+
+/* ----- Box Shadow ----- */
+<box-shadow> = none | [inset? && <length>{2,4} && <color>?]#
+
+/* ----- Text Effects ----- */
+<text-shadow> = none | [<length>{2,3} && <color>?]#
+<text-decoration-thickness> = auto | from-font | <length> | <percentage>
+<text-emphasis-style> = none | [ [ filled | open ] || [ dot | circle | double-circle | triangle | sesame ] ] | <string>
+<text-emphasis-color> = <color>
+<text-emphasis-position> = [ over | under ] && [ right | left ]
+<text-emphasis> = <text-emphasis-style> || <text-emphasis-color>
+
+/* ----- Multi-column Layout ----- */
+<column-width> = auto | <length min=0>
+<column-count> = auto | <integer min=1>
+<columns> = <column-width> || <column-count>
+<column-gap> = normal | <length-percentage>
+<column-rule-style> = <border-style>
+<column-rule-width> = <border-width>
+<column-rule-color> = <color>
+<column-rule> = <column-rule-width> || <column-rule-style> || <column-rule-color>
+<column-span> = none | all
+<column-fill> = auto | balance | balance-all
+
+/* ----- Transform Properties ----- */
+<transform> = none | <transform-function>+
+<transform-origin> = [ <length-percentage> | left | center | right | top | bottom ]{1,3}
+<transform-style> = flat | preserve-3d
+<perspective> = none | <length>
+<perspective-origin> = [ <length-percentage> | left | center | right | top | bottom ]{1,2}
+<backface-visibility> = visible | hidden
+
+/* ----- Transitions ----- */
+<transition-property> = none | all | <custom-ident>#
+<transition-duration> = <time>#
+<transition-timing-function> = ease | linear | ease-in | ease-out | ease-in-out | step-start | step-end | steps(<integer>, <step-position>?) | cubic-bezier(<number>, <number>, <number>, <number>)
+<transition-delay> = <time>#
+<transition> = [ <transition-property> || <transition-duration> || <transition-timing-function> || <transition-delay> ]#
+
+/* ----- Animations ----- */
+<animation-name> = none | <custom-ident>#
+<animation-duration> = <time>#
+<animation-timing-function> = <transition-timing-function>#
+<animation-iteration-count> = infinite | <number>#
+<animation-direction> = normal | reverse | alternate | alternate-reverse
+<animation-play-state> = running | paused
+<animation-delay> = <time>#
+<animation-fill-mode> = none | forwards | backwards | both
+<animation> = [ <animation-name> || <animation-duration> || <animation-timing-function> || <animation-delay> || <animation-iteration-count> || <animation-direction> || <animation-fill-mode> || <animation-play-state> ]#
+
+/* ----- Lists ----- */
+<list-style-type> = disc | circle | square | decimal | decimal-leading-zero | lower-roman | upper-roman | lower-greek | lower-latin | upper-latin | armenian | georgian | none | <string>
+<list-style-position> = inside | outside
+<list-style-image> = <image> | none
+<list-style> = <list-style-type> || <list-style-position> || <list-style-image>
+
+/* ----- Table Properties ----- */
+<border-collapse> = collapse | separate
+<border-spacing> = <length> <length>?
+<caption-side> = top | bottom
+<empty-cells> = show | hide
+<table-layout> = auto | fixed
+
+/* ----- User Interface Properties ----- */
+<resize> = none | both | horizontal | vertical | block | inline
+<cursor> = [ auto | default | none | context-menu | help | pointer | progress | wait | cell | crosshair | text | vertical-text | alias | copy | move | no-drop | not-allowed | e-resize | n-resize | ne-resize | nw-resize | s-resize | se-resize | sw-resize | w-resize | ew-resize | ns-resize | nesw-resize | nwse-resize | col-resize | row-resize | all-scroll | zoom-in | zoom-out | grab | grabbing ]
+<caret-color> = auto | <color>
+<nav-index> = auto | <integer>
+<nav-up> = auto | <id> [ current | root | <target-name> ]?
+<nav-right> = auto | <id> [ current | root | <target-name> ]?
+<nav-down> = auto | <id> [ current | root | <target-name> ]?
+<nav-left> = auto | <id> [ current | root | <target-name> ]?
+
+/* ----- Paged Media ----- */
+<page-break-before> = auto | always | avoid | left | right
+<page-break-after> = auto | always | avoid | left | right
+<page-break-inside> = auto | avoid
+<orphans> = <integer>
+<widows> = <integer>
+<image-orientation> = none | from-image | <angle> | [ from-image || <angle> ]
+
+/* ----- Generated Content ----- */
+<content> = normal | none | [ <string> | <url> | <counter> | attr(<identifier>) | open-quote | close-quote | no-open-quote | no-close-quote ]+
+<quotes> = none | [ <string> <string> ]+
+<counter-reset> = none | [ <custom-ident> <integer>? ]+
+<counter-increment> = none | [ <custom-ident> <integer>? ]+
+<marker-offset> = auto | <length>
+
+/* ----- Miscellaneous Properties ----- */
+<appearance> = none | auto | button | textfield | <compat-auto>
+<user-select> = auto | text | none | contain | all
+<break-before> = auto | avoid | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region
+<break-after> = auto | avoid | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region
+<break-inside> = auto | avoid | avoid-page | avoid-column | avoid-region
+<isolation> = auto | isolate
+<mix-blend-mode> = normal | multiply | screen | overlay | darken | lighten | color-dodge | color-burn | hard-light | soft-light | difference | exclusion | hue | saturation | color | luminosity
+<object-fit> = fill | contain | cover | none | scale-down
+<object-position> = <position>
+<image-rendering> = auto | smooth | high-quality | crisp-edges | pixelated
+<mask-type> = luminance | alpha
+
+/* ----- Filter Effects ----- */
+<filter> = none | <filter-function-list>
+<filter-function> = blur( <length> ) | brightness( <number-percentage> ) | contrast( <number-percentage> ) | drop-shadow( <length>{2,3} <color>? ) | grayscale( <number-percentage> ) | hue-rotate( <angle> ) | invert( <number-percentage> ) | opacity( <number-percentage> ) | saturate( <number-percentage> ) | sepia( <number-percentage> )
+
+/* ----- Writing Modes ----- */
+<text-combine-upright> = none | all | [ digits <integer>? ]
+<text-orientation> = mixed | upright | sideways
+<writing-mode> = horizontal-tb | vertical-rl | vertical-lr | sideways-rl | sideways-lr
+
+/* ----- Overflow Properties ----- */
+<overflow-clip-margin> = <visual-box> | <length>
+<text-overflow> = [ clip | ellipsis | <string> ]{1,2}
+<overflow-wrap> = normal | break-word | anywhere
+
+/* ----- Pointer Events ----- */
+<pointer-events> = auto | none | visiblePainted | visibleFill | visibleStroke | visible | painted | fill | stroke | all
+
+/* ----- Scrolling ----- */
+<scroll-behavior> = auto | smooth
+<overscroll-behavior> = [ contain | none | auto ]{1,2}
+<scroll-snap-type> = none | [ x | y | block | inline | both ] [ mandatory | proximity ]?
+<scroll-snap-align> = [ none | start | end | center ]{1,2}
+<scroll-margin> = <length>{1,4}
+<scroll-padding> = [ auto | <length-percentage> ]{1,4}
+
+/* ----- Ruby Annotation ----- */
+<ruby-align> = start | center | space-between | space-around
+<ruby-position> = over | under | inter-character
