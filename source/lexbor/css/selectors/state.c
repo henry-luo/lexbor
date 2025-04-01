@@ -245,6 +245,16 @@ lxb_css_selectors_done(lxb_css_parser_t *parser)
     return lxb_css_parser_states_set_back(parser);
 }
 
+lxb_inline bool
+lxb_css_selectors_state_fail(lxb_css_parser_t *parser)
+{
+    parser->status = LXB_STATUS_ERROR_UNEXPECTED_DATA;
+
+    (void) lxb_css_parser_states_pop(parser);
+
+    return false;
+}
+
 lxb_inline void
 lxb_css_selectors_state_specificity_set_b(lxb_css_selectors_t *selectors)
 {

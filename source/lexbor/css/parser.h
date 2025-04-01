@@ -15,8 +15,6 @@ extern "C" {
 #include "lexbor/css/log.h"
 #include "lexbor/css/stylesheet.h"
 #include "lexbor/css/syntax/parser.h"
-#include "lexbor/css/selectors/selectors.h"
-
 
 #define lxb_css_parser_token_m(parser, token)                                  \
     do {                                                                       \
@@ -509,6 +507,7 @@ lxb_css_parser_declarations_offset(lxb_css_parser_t *parser)
     return &parser->rules->u.declarations;
 }
 
+#include "lexbor/css/selectors/selectors.h"
 
 #ifdef __cplusplus
 } /* extern "C" */

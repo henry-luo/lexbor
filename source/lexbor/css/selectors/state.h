@@ -68,15 +68,16 @@ lxb_css_selectors_state_function_forgiving_relative(lxb_css_parser_t *parser,
                                                     const lxb_css_syntax_token_t *token,
                                                     void *ctx, bool failed);
 
-lxb_inline bool
-lxb_css_selectors_state_fail(lxb_css_parser_t *parser)
-{
-    parser->status = LXB_STATUS_ERROR_UNEXPECTED_DATA;
+// lxb_inline bool
+// lxb_css_selectors_state_fail(lxb_css_parser_t *parser)
+// {
+//     parser->status = LXB_STATUS_ERROR_UNEXPECTED_DATA;
 
-    (void) lxb_css_parser_states_pop(parser);
+//     // (void) lxb_css_parser_states_pop(parser);
+//     parser->states--;
 
-    return false;
-}
+//     return false;
+// }
 
 
 #ifdef __cplusplus

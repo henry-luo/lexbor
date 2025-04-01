@@ -1877,6 +1877,8 @@ LXB_API lxb_status_t
 lxb_css_property_border_left_style_serialize(const void *style,
                                             lexbor_serialize_cb_f cb, void *ctx);
 
+#include "lexbor/css/property_extra.h"
+
 #ifdef __cplusplus
 } /* extern "C" */
 #endif

@@ -12,7 +12,7 @@ extern "C" {
 #endif
 
 #include "lexbor/css/base.h"
-
+#include "lexbor/css/property/state_extra.h"
 
 LXB_API bool
 lxb_css_property_state__undef(lxb_css_parser_t *parser,
@@ -356,9 +356,9 @@ LXB_API bool
 lxb_css_property_state_border_bottom_style(lxb_css_parser_t *parser,
                                          const lxb_css_syntax_token_t *token, void *ctx);
 
-LXB_API bool
-lxb_css_property_state_border_left_style(lxb_css_parser_t *parser,
-                                       const lxb_css_syntax_token_t *token, void *ctx);
+// LXB_API bool s(lxb_css_parser_t *parser, const lxb_css_syntax_token_t *token, void *ctx);
+
+#include "lexbor/css/property/state_extra.h"
 
 #ifdef __cplusplus
 } /* extern "C" */
