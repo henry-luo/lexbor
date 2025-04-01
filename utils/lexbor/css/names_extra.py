@@ -133,15 +133,15 @@ additional_styles = {
     "transition": {"values": [], "initial": "&(lxb_css_property_transition_t) {.property = {.type = LXB_CSS_TRANSITION_PROPERTY_ALL}, .duration = {.type = LXB_CSS_VALUE__NUMBER, %s}, .timing_function = {.type = LXB_CSS_TRANSITION_TIMING_FUNCTION_EASE}, .delay = {.type = LXB_CSS_VALUE__NUMBER, %s}}" % (time_0, time_0)},
     
     # Animations
-    "animation-name": {"values": ["none"], "initial": "&(lxb_css_property_animation_name_t) {.type = LXB_CSS_ANIMATION_NAME_NONE}"},
-    "animation-duration": {"values": ["_time"], "initial": "&(lxb_css_property_animation_duration_t) {.type = LXB_CSS_VALUE__NUMBER, %s}" % time_0},
-    "animation-timing-function": {"values": ["ease", "linear", "ease-in", "ease-out", "ease-in-out", "step-start", "step-end"], "initial": "&(lxb_css_property_animation_timing_function_t) {.type = LXB_CSS_ANIMATION_TIMING_FUNCTION_EASE}"},
-    "animation-iteration-count": {"values": ["infinite", "_number"], "initial": "&(lxb_css_property_animation_iteration_count_t) {.type = LXB_CSS_ANIMATION_ITERATION_COUNT__NUMBER, .number = {.num = 1, .is_float = false}}"},
-    "animation-direction": {"values": ["normal", "reverse", "alternate", "alternate-reverse"], "initial": "&(lxb_css_property_animation_direction_t) {.type = LXB_CSS_ANIMATION_DIRECTION_NORMAL}"},
-    "animation-play-state": {"values": ["running", "paused"], "initial": "&(lxb_css_property_animation_play_state_t) {.type = LXB_CSS_ANIMATION_PLAY_STATE_RUNNING}"},
-    "animation-delay": {"values": ["_time"], "initial": "&(lxb_css_property_animation_delay_t) {.type = LXB_CSS_VALUE__NUMBER, %s}" % time_0},
-    "animation-fill-mode": {"values": ["none", "forwards", "backwards", "both"], "initial": "&(lxb_css_property_animation_fill_mode_t) {.type = LXB_CSS_ANIMATION_FILL_MODE_NONE}"},
-    "animation": {"values": [], "initial": "&(lxb_css_property_animation_t) {.name = {.type = LXB_CSS_ANIMATION_NAME_NONE}, .duration = {.type = LXB_CSS_VALUE__NUMBER, %s}, .timing_function = {.type = LXB_CSS_ANIMATION_TIMING_FUNCTION_EASE}, .iteration_count = {.type = LXB_CSS_ANIMATION_ITERATION_COUNT__NUMBER, .number = {.num = 1, .is_float = false}}, .direction = {.type = LXB_CSS_ANIMATION_DIRECTION_NORMAL}, .play_state = {.type = LXB_CSS_ANIMATION_PLAY_STATE_RUNNING}, .delay = {.type = LXB_CSS_VALUE__NUMBER, %s}, .fill_mode = {.type = LXB_CSS_ANIMATION_FILL_MODE_NONE}}" % (time_0, time_0)},
+    # "animation-name": {"values": ["none"], "initial": "&(lxb_css_property_animation_name_t) {.type = LXB_CSS_ANIMATION_NAME_NONE}"},
+    # "animation-duration": {"values": ["_time"], "initial": "&(lxb_css_property_animation_duration_t) {.type = LXB_CSS_VALUE__NUMBER, %s}" % time_0},
+    # "animation-timing-function": {"values": ["ease", "linear", "ease-in", "ease-out", "ease-in-out", "step-start", "step-end"], "initial": "&(lxb_css_property_animation_timing_function_t) {.type = LXB_CSS_ANIMATION_TIMING_FUNCTION_EASE}"},
+    # "animation-iteration-count": {"values": ["infinite", "_number"], "initial": "&(lxb_css_property_animation_iteration_count_t) {.type = LXB_CSS_ANIMATION_ITERATION_COUNT__NUMBER, .number = {.num = 1, .is_float = false}}"},
+    # "animation-direction": {"values": ["normal", "reverse", "alternate", "alternate-reverse"], "initial": "&(lxb_css_property_animation_direction_t) {.type = LXB_CSS_ANIMATION_DIRECTION_NORMAL}"},
+    # "animation-play-state": {"values": ["running", "paused"], "initial": "&(lxb_css_property_animation_play_state_t) {.type = LXB_CSS_ANIMATION_PLAY_STATE_RUNNING}"},
+    # "animation-delay": {"values": ["_time"], "initial": "&(lxb_css_property_animation_delay_t) {.type = LXB_CSS_VALUE__NUMBER, %s}" % time_0},
+    # "animation-fill-mode": {"values": ["none", "forwards", "backwards", "both"], "initial": "&(lxb_css_property_animation_fill_mode_t) {.type = LXB_CSS_ANIMATION_FILL_MODE_NONE}"},
+    # "animation": {"values": [], "initial": "&(lxb_css_property_animation_t) {.name = {.type = LXB_CSS_ANIMATION_NAME_NONE}, .duration = {.type = LXB_CSS_VALUE__NUMBER, %s}, .timing_function = {.type = LXB_CSS_ANIMATION_TIMING_FUNCTION_EASE}, .iteration_count = {.type = LXB_CSS_ANIMATION_ITERATION_COUNT__NUMBER, .number = {.num = 1, .is_float = false}}, .direction = {.type = LXB_CSS_ANIMATION_DIRECTION_NORMAL}, .play_state = {.type = LXB_CSS_ANIMATION_PLAY_STATE_RUNNING}, .delay = {.type = LXB_CSS_VALUE__NUMBER, %s}, .fill_mode = {.type = LXB_CSS_ANIMATION_FILL_MODE_NONE}}" % (time_0, time_0)},
     
     # Lists
     "list-style-type": {"values": ["disc", "circle", "square", "decimal", "decimal-leading-zero", "lower-roman", "upper-roman", "lower-greek", "lower-latin", "upper-latin", "armenian", "georgian", "none"], "initial": "&(lxb_css_property_list_style_type_t) {.type = LXB_CSS_LIST_STYLE_TYPE_DISC}"},
