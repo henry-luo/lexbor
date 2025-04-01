@@ -409,8 +409,9 @@ def generate_file_footer():
 
 # Main function
 def main():
-    # Use command line argument if provided, otherwise use default
-    output_file = sys.argv[1] if len(sys.argv) > 1 else DEFAULT_OUTPUT_FILE
+    target_property_name = sys.argv[1]
+
+    output_file = DEFAULT_OUTPUT_FILE
     
     # Parse the grammar file
     print(f"Parsing grammar file: {GRAMMAR_FILE}")
@@ -420,12 +421,10 @@ def main():
         print("Error: No properties were parsed from the grammar file")
         return
     
-    # Import styles from names.py to avoid duplicates
-    from names import base_styles, styles
-    
     # keeps properties defined in names_extra.py
     for prop_name in list(properties.keys()):
-        if not (prop_name in additional_styles):
+        # if not (prop_name in additional_styles):
+        if not(prop_name == target_property_name):
             del properties[prop_name]
 
     # Generate the header file

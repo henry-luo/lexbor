@@ -325,7 +325,6 @@
 <transform-style> = flat | preserve-3d
 <perspective> = none | <length>
 <perspective-origin> = [ <length-percentage> | left | center | right | top | bottom ]{1,2}
-<backface-visibility> = visible | hidden
 
 /* ----- Transitions ----- */
 <transition-property> = none | all | <custom-ident>#
@@ -375,7 +374,6 @@
 <marker-offset> = auto | <length>
 
 /* ----- Miscellaneous Properties ----- */
-<appearance> = none | auto | button | textfield | <compat-auto>
 <user-select> = auto | text | none | contain | all
 <break-before> = auto | avoid | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region
 <break-after> = auto | avoid | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region
