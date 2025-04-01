@@ -16,7 +16,7 @@ def create_c_identifier(property_name):
 def generate_function_declaration(property_name):
     """Generate the function declaration for a property parser"""
     c_prop = create_c_identifier(property_name)
-    return f"lxb_css_parser_state_f lxb_css_state_{c_prop}(lxb_css_parser_t *parser, lxb_css_syntax_token_t *token, void *ctx, lxb_css_syntax_token_t **out_token);"
+    return f"lxb_css_parser_state_f lxb_css_property_state_{c_prop}(lxb_css_parser_t *parser, lxb_css_syntax_token_t *token, void *ctx, lxb_css_syntax_token_t **out_token);"
 
 def generate_state_extra_h():
     """Generate the complete state_extra.h file"""

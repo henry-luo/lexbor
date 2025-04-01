@@ -18,7 +18,7 @@ def generate_function_header(property_name):
     c_prop = create_c_identifier(property_name)
     return f"""
 lxb_css_parser_state_f
-lxb_css_state_{c_prop}(lxb_css_parser_t *parser, lxb_css_syntax_token_t *token,
+lxb_css_property_state_{c_prop}(lxb_css_parser_t *parser, lxb_css_syntax_token_t *token,
                       void *ctx, lxb_css_syntax_token_t **out_token)
 {{"""
 

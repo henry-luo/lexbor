@@ -95,7 +95,7 @@ extern "C" {
 
 #include "lexbor/core/str.h"
 #include "lexbor/css/css.h"
-#include "lexbor/css/property.h"
+// #include "lexbor/css/property.h"
 #include "lexbor/css/value.h"
 
 /* Struct definitions */
