@@ -215,9 +215,11 @@ additional_styles = {
     "ruby-position": {"values": ["over", "under", "inter-character"], "initial": "&(lxb_css_property_ruby_position_t) {.type = LXB_CSS_RUBY_POSITION_OVER}"},
 }
 
+target_property_name = sys.argv[1]
+
 for prop_name in list(additional_styles.keys()):
     # if not (prop_name in additional_styles):
-    if not(prop_name == 'box-shadow'):
+    if not(prop_name == target_property_name):
         del additional_styles[prop_name]
 
 # Function to merge additional properties with any existing properties

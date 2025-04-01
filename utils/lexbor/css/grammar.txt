@@ -334,6 +334,15 @@
 <transition> = [ <transition-property> || <transition-duration> || <transition-timing-function> || <transition-delay> ]#
 
 /* ----- Animations ----- */
+<animation-name> = none | <custom-ident>#
+<animation-duration> = <time>#
+<animation-timing-function> = <transition-timing-function>#
+<animation-iteration-count> = infinite | <number>#
+<animation-direction> = normal | reverse | alternate | alternate-reverse
+<animation-play-state> = running | paused
+<animation-delay> = <time>#
+<animation-fill-mode> = none | forwards | backwards | both
+<animation> = [ <animation-name> || <animation-duration> || <animation-timing-function> || <animation-delay> || <animation-iteration-count> || <animation-direction> || <animation-fill-mode> || <animation-play-state> ]#
 
 /* ----- Lists ----- */
 <list-style-type> = disc | circle | square | decimal | decimal-leading-zero | lower-roman | upper-roman | lower-greek | lower-latin | upper-latin | armenian | georgian | none | <string>
@@ -374,6 +383,8 @@
 <marker-offset> = auto | <length>
 
 /* ----- Miscellaneous Properties ----- */
+<appearance> = none | auto | button | textfield | <compat-auto>
+<backface-visibility> = visible | hidden
 <user-select> = auto | text | none | contain | all
 <break-before> = auto | avoid | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region
 <break-after> = auto | avoid | avoid-page | page | left | right | recto | verso | avoid-column | column | avoid-region | region

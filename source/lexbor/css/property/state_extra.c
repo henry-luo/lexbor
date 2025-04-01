@@ -10,37 +10,37 @@
 
 
 bool lxb_css_property_state_box_shadow(lxb_css_parser_t *parser, const lxb_css_syntax_token_t *token, void *ctx) {
-    lxb_css_property_box_shadow_t *property = lxb_css_parser_create_property_placeholder(parser, offsetof(lxb_css_property_t, box_shadow));
-    if (property == NULL) {
-        return lxb_css_parser_memory_fail(parser);
-    }
+    // lxb_css_property_box_shadow_t *property = lxb_css_parser_create_property_placeholder(parser, offsetof(lxb_css_property_t, box_shadow));
+    // if (property == NULL) {
+    //     return lxb_css_parser_memory_fail(parser);
+    // }
 
-    lxb_css_syntax_token_t *ident;
-    const lxb_char_t *name;
-    size_t length;
+    // lxb_css_syntax_token_t *ident;
+    // const lxb_char_t *name;
+    // size_t length;
 
-    if (token->type == LXB_CSS_SYNTAX_TOKEN_IDENT) {
-        ident = token;
-        name = lxb_css_syntax_token_ident_data(ident);
-        length = lxb_css_syntax_token_ident_length(ident);
-        if (lxb_css_property_state_eq(name, length, "none", 4)) {
-            property->type = LXB_CSS_BOX_SHADOW_NONE;
-        }
-        else if (lxb_css_property_state_eq(name, length, "inset", 5)) {
-            property->type = LXB_CSS_BOX_SHADOW_INSET;
-        }
-        else {
-            lxb_css_parser_warning(parser, LXB_CSS_PARSER_WARNING_PROPERTY_INVALID_VALUE, token);
-            lxb_css_parser_destroy_property_placeholder(parser);
-            return lxb_css_parser_state_element_skip_to_semicolonp;
-        }
-    }
-    else {
-        lxb_css_parser_warning(parser, LXB_CSS_PARSER_WARNING_PROPERTY_INVALID_VALUE, token);
-        lxb_css_parser_destroy_property_placeholder(parser);
-        return lxb_css_parser_state_element_skip_to_semicolonp;
-    }
+    // if (token->type == LXB_CSS_SYNTAX_TOKEN_IDENT) {
+    //     ident = token;
+    //     name = lxb_css_syntax_token_ident_data(ident);
+    //     length = lxb_css_syntax_token_ident_length(ident);
+    //     if (lxb_css_property_state_eq(name, length, "none", 4)) {
+    //         property->type = LXB_CSS_BOX_SHADOW_NONE;
+    //     }
+    //     else if (lxb_css_property_state_eq(name, length, "inset", 5)) {
+    //         property->type = LXB_CSS_BOX_SHADOW_INSET;
+    //     }
+    //     else {
+    //         lxb_css_parser_warning(parser, LXB_CSS_PARSER_WARNING_PROPERTY_INVALID_VALUE, token);
+    //         lxb_css_parser_destroy_property_placeholder(parser);
+    //         return lxb_css_parser_state_element_skip_to_semicolonp;
+    //     }
+    // }
+    // else {
+    //     lxb_css_parser_warning(parser, LXB_CSS_PARSER_WARNING_PROPERTY_INVALID_VALUE, token);
+    //     lxb_css_parser_destroy_property_placeholder(parser);
+    //     return lxb_css_parser_state_element_skip_to_semicolonp;
+    // }
 
-    *out_token = lxb_css_parser_token_consume(parser);
-    return lxb_css_parser_state_element_return_to_parent;
+    // *out_token = lxb_css_parser_token_consume(parser);
+    // return lxb_css_parser_state_element_return_to_parent;
 }

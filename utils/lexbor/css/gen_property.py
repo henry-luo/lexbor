@@ -183,7 +183,6 @@ def generate_file_header():
 
 #include "lexbor/css/css.h"
 #include "lexbor/css/property.h"
-#include "lexbor/css/property_extra.h"
 #include "lexbor/css/parser.h"
 #include "lexbor/css/stylesheet.h"
 #include "lexbor/css/property/state.h"
@@ -194,18 +193,18 @@ def generate_file_header():
 """
 
 # Main script execution
-def main():
+def gen_property_c():
     # Default output file is property_extra.c in the source directory
     default_output_file = os.path.join(os.path.dirname(ABS_PATH), '..', '..', 'source', 'lexbor', 'css', 'property_extra.c')
     
     # Use command line argument if provided, otherwise use default
     output_file = sys.argv[1] if len(sys.argv) > 1 else default_output_file
     
-    with open(output_file, 'w') as f:
-        f.write(generate_file_header())
+    with open(output_file, 'a') as f:
+        # f.write(generate_file_header())
         f.write(generate_all_property_functions())
     
     print(f"Generated code written to {output_file}")
 
 if __name__ == "__main__":
-    main()
+    gen_property_c()
