@@ -342,13 +342,12 @@ def generate_enum_definition(enum_type, enum_values):
     enum_def = f"""
 typedef enum {{
 """
-    
     # Add each enum constant
     for value in sorted_values:
         enum_def += f"    LXB_CSS_{enum_prefix}_{value},\n"
     
     # Close the enum definition with a last entry marker
-    enum_def += f"""    LXB_CSS_{enum_prefix}__LAST_ENTRY
+    enum_def += f"""
 }}
 {enum_name};
 """
@@ -398,7 +397,7 @@ def gen_property_h():
     # Generate the header file
     with open(output_file, 'a') as f:
         # Write header with include guards and enum definitions
-        f.write(generate_file_header(properties))
+        # f.write(generate_file_header(properties))
         
         # Write struct definitions
         f.write("\n/* Struct definitions */\n")
@@ -412,10 +411,6 @@ def gen_property_h():
         
     
     print(f"Generated header file written to {output_file}")
-    
-    # Print summary of enum types found
-    enum_types = extract_enum_types_from_properties(properties)
-    print(f"Generated {len(enum_types)} enum type definitions")
 
 if __name__ == "__main__":
     gen_property_h()

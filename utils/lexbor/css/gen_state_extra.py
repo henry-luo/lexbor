@@ -107,9 +107,7 @@ def generate_value_parsing(property_name, values):
 
 def generate_function_footer():
     """Generate the function footer"""
-    return """
-    *out_token = lxb_css_parser_token_consume(parser);
-    return lxb_css_parser_state_element_return_to_parent;
+    return """return lxb_css_parser_success(parser);
 }"""
 
 def generate_property_parser(property_name, property_def):

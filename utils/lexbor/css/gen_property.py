@@ -197,8 +197,7 @@ def gen_property_c():
     # Default output file is property_extra.c in the source directory
     default_output_file = os.path.join(os.path.dirname(ABS_PATH), '..', '..', 'source', 'lexbor', 'css', 'property_extra.c')
     
-    # Use command line argument if provided, otherwise use default
-    output_file = sys.argv[1] if len(sys.argv) > 1 else default_output_file
+    output_file = default_output_file
     
     with open(output_file, 'a') as f:
         # f.write(generate_file_header())

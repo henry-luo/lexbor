@@ -20,7 +20,7 @@ def generate_function_declaration(property_name):
 
 def generate_state_extra_h():
     """Generate the complete state_extra.h file"""
-    file_content = []
+    file_content = ["\n"]
     
     # Generate function declarations for each property
     for prop_name in additional_styles.keys():

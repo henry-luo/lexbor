@@ -72,8 +72,10 @@ lxb_css_property_box_shadow_destroy(lxb_css_memory_t *memory,
 LXB_API lxb_status_t
 lxb_css_property_box_shadow_serialize(const void *style,
                                        lexbor_serialize_cb_f cb, void *ctx);
-#ifdef __cplusplus
-} /* extern "C" */
-#endif
 
-#endif /* LEXBOR_CSS_PROPERTY_GRAMMAR_H */
+typedef struct {
+    lxb_css_value_length_percentage_t top;
+    lxb_css_value_length_percentage_t right;
+    lxb_css_value_length_percentage_t bottom;
+    lxb_css_value_length_percentage_t left;
+} lxb_css_property_border_radius_t;
