@@ -6,6 +6,9 @@ sys.path.append("{}/../lexbor/".format(ABS_PATH))
 
 import LXB
 
+# Import additional styles from names_extra.py
+from names_extra import merge_with_existing_styles, additional_styles
+
 # CSS StyleSheet entries
 
 at_rules = {
@@ -70,7 +73,8 @@ length_percentage_0 = "{.type = LXB_CSS_VALUE__LENGTH, %s}" % (length_0)
 length_percentage_auto = "{.type = LXB_CSS_VALUE_AUTO, %s}" % (length_0)
 border_init = "{.style = LXB_CSS_BORDER_NONE, .width = {.type = LXB_CSS_BORDER_MEDIUM}, .color = {.type = LXB_CSS_COLOR_CURRENTCOLOR}}"
 
-styles = {
+# Define base styles
+base_styles = {
     # https://drafts.csswg.org/css-display/
 
     "display": {
@@ -272,6 +276,9 @@ styles = {
     # cursor
     "cursor": {"values": ["hand", "pointer", "text", "wait", "progress", "grab", "grabbing", "move", "auto"], "initial": "&(lxb_css_property_cursor_t) {.type = LXB_CSS_CURSOR_AUTO}"},
 }
+
+# Merge base styles with additional styles from names_extra.py
+styles = merge_with_existing_styles(base_styles)
 
 compiles = [
     ["at_rule", at_rules, False],
