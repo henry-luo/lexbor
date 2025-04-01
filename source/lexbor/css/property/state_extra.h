@@ -20,3 +20,5 @@ LXB_API bool lxb_css_property_state_box_shadow(lxb_css_parser_t *parser, const l
 #endif
 
 #endif /* LEXBOR_CSS_PROPERTY_STATE_EXTRA_H */
+
+LXB_API bool lxb_css_property_state_border_radius(lxb_css_parser_t *parser, lxb_css_syntax_token_t *token, void *ctx);

@@ -4,14 +4,6 @@
  * Author: Alexander Borisov <borisov@lexbor.com>
  */
 
-#ifndef LEXBOR_CSS_PROPERTY_GRAMMAR_H
-#define LEXBOR_CSS_PROPERTY_GRAMMAR_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-
 /* Enumeration definitions */
 
 typedef enum {
@@ -79,3 +71,7 @@ typedef struct {
     lxb_css_value_length_percentage_t bottom;
     lxb_css_value_length_percentage_t left;
 } lxb_css_property_border_radius_t;
+
+/* Struct definitions */
+
+/* Function prototypes */

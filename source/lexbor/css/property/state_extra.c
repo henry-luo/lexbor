@@ -44,3 +44,37 @@ bool lxb_css_property_state_box_shadow(lxb_css_parser_t *parser, const lxb_css_s
     // *out_token = lxb_css_parser_token_consume(parser);
     // return lxb_css_parser_state_element_return_to_parent;
 }
+
+LXB_API bool lxb_css_property_state_border_radius(lxb_css_parser_t *parser, lxb_css_syntax_token_t *token, void *ctx) {
+    // lxb_css_property_border_radius_t *property = lxb_css_parser_create_property_placeholder(parser, offsetof(lxb_css_property_t, border_radius));
+    // if (property == NULL) {
+    //     return lxb_css_parser_memory_fail(parser);
+    // }
+
+    // lxb_css_syntax_token_t *ident;
+    // const lxb_char_t *name;
+    // size_t length;
+
+    // if (token->type == LXB_CSS_SYNTAX_TOKEN_IDENT) {
+    //     ident = token;
+    //     name = lxb_css_syntax_token_ident_data(ident);
+    //     length = lxb_css_syntax_token_ident_length(ident);
+    //     else if (lxb_css_property_state_parse_length(parser, ident, &property->u.length)) {
+    //         property->type = LXB_CSS_BORDER_RADIUS__LENGTH;
+    //     }
+    //     else if (lxb_css_property_state_parse_percentage(parser, ident, &property->u.percentage)) {
+    //         property->type = LXB_CSS_BORDER_RADIUS__PERCENTAGE;
+    //     }
+    //     else {
+    //         lxb_css_parser_warning(parser, LXB_CSS_PARSER_WARNING_PROPERTY_INVALID_VALUE, token);
+    //         lxb_css_parser_destroy_property_placeholder(parser);
+    //         return lxb_css_parser_state_element_skip_to_semicolonp;
+    //     }
+    // }
+    // else {
+    //     lxb_css_parser_warning(parser, LXB_CSS_PARSER_WARNING_PROPERTY_INVALID_VALUE, token);
+    //     lxb_css_parser_destroy_property_placeholder(parser);
+    //     return lxb_css_parser_state_element_skip_to_semicolonp;
+    // }
+return lxb_css_parser_success(parser);
+}
