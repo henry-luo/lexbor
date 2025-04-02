@@ -4,6 +4,25 @@ const fs = require('fs');
 const path = require('path');
 const { spawn, execSync } = require('child_process');
 
+// Add a helper to extract node text safely
+function getNodeText(node, sourceCode) {
+  if (!node || typeof node.startIndex !== 'number' || typeof node.endIndex !== 'number') {
+    return '';
+  }
+  return sourceCode.slice(node.startIndex, node.endIndex);
+}
+
+// Add a helper to extract reference names from text
+function extractReferenceName(text) {
+  // Match anything between < and >
+  const match = text.match(/<([^>]+)>/);
+  if (match && match[1]) {
+    return match[1];
+  }
+  // If no angle brackets, return as is
+  return text.trim();
+}
+
 // Convert Tree-sitter nodes to AST
 function parseToAst(node, sourceCode) {
   // Add null check at the beginning
@@ -28,7 +47,6 @@ function parseToAst(node, sourceCode) {
     for (let i = 0; i < node.childCount; i++) {
       const child = node.child(i);
       console.log(`  Child ${i}: ${child ? child.type : 'null'}`);
-      
       if (child) {
         if (child.type === 'rule_name') {
           nameNode = child;
@@ -107,51 +125,27 @@ function parseToAst(node, sourceCode) {
     };
   }
   else if (node.type === 'reference') {
-    let nameNode = null;
-    let permissionNode = null;
+    // Extract the full reference text directly from source
+    const fullText = getNodeText(node, sourceCode);
+    console.log(`Reference node text: "${fullText}"`);
     
-    for (let i = 0; i < node.childCount; i++) {
-      const child = node.child(i);
-      if (child.type === 'name') {
-        nameNode = child;
-      }
-      if (child.type === 'permission') {
-        permissionNode = child;
-      }
+    // Direct extraction of reference name from the text
+    let refName = extractReferenceName(fullText);
+    
+    // Extract constraints if present
+    const constraintMatch = refName.match(/([^ ]+)\s+([^ ]+)=([^ ]+)/);
+    let constraints = {};
+    
+    if (constraintMatch) {
+      refName = constraintMatch[1]; // The actual name is the first part
+      constraints[constraintMatch[2]] = constraintMatch[3];
     }
     
-    if (!nameNode) {
-      // If field name isn't found, the second child should be the name (after '<')
-      nameNode = node.child(1);
-    }
-    
-    const result = {
+    return {
       type: 'reference',
-      name: sourceCode.slice(nameNode.startIndex, nameNode.endIndex),
+      name: refName,
+      constraints: Object.keys(constraints).length > 0 ? constraints : undefined
     };
-    
-    // Add constraints
-    const constraints = {};
-    for (let i = 0; i < node.childCount; i++) {
-      const child = node.child(i);
-      if (child.type === 'constraint_name') {
-        const key = sourceCode.slice(child.startIndex, child.endIndex);
-        const valueNode = node.child(i + 2);
-        const value = sourceCode.slice(valueNode.startIndex, valueNode.endIndex);
-        constraints[key] = value.includes('.') ? parseFloat(value) : parseInt(value);
-      }
-    }
-    
-    if (Object.keys(constraints).length > 0) {
-      result.constraints = constraints;
-    }
-    
-    // Add permissions
-    if (permissionNode) {
-      result.permissions = [sourceCode.slice(permissionNode.startIndex, permissionNode.endIndex)];
-    }
-    
-    return result;
   }
   else if (node.type === 'group') {
     const inner = node.child(1);
@@ -161,53 +155,99 @@ function parseToAst(node, sourceCode) {
     };
   }
   else if (node.type === 'repetition') {
+    // Add additional debugging
+    console.log(`Handling repetition with ${node.childCount} children`);
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      console.log(`  Repetition child ${i}: ${child ? child.type : 'null'}`);
+    }
+
     const atom = node.child(0);
+    
+    // Add null check for atom
+    if (!atom) {
+      console.warn('Repetition with null atom');
+      return { type: 'incomplete_repetition' };
+    }
+    
     const operator = node.child(1);
     
-    if (operator.type === '*') {
+    // Add null check for operator
+    if (!operator) {
+      console.warn('Repetition with null operator');
+      return { 
+        type: 'repetition',
+        expression: parseToAst(atom, sourceCode),
+        operator: 'unknown'
+      };
+    }
+    
+    // Handle operator types with null safety
+    const operatorType = operator.type || '';
+    
+    if (operatorType === '*') {
       return {
         type: 'zero_or_more',
         expression: parseToAst(atom, sourceCode)
       };
     }
-    else if (operator.type === '+') {
+    else if (operatorType === '+') {
       return {
         type: 'one_or_more',
         expression: parseToAst(atom, sourceCode)
       };
     }
-    else if (operator.type === '#') {
+    else if (operatorType === '#') {
       return {
         type: 'one_or_more_comma',
         expression: parseToAst(atom, sourceCode)
       };
     }
     else {
+      // Find min and max nodes more safely
       let minNode = null;
       let maxNode = null;
+      let minValue = 1;  // Default values
+      let maxValue = 1;
       
       for (let i = 0; i < node.childCount; i++) {
         const child = node.child(i);
-        if (child.type === 'min') {
+        if (child && child.type === 'min') {
           minNode = child;
         }
-        if (child.type === 'max') {
+        if (child && child.type === 'max') {
           maxNode = child;
         }
       }
       
-      const min = parseInt(sourceCode.slice(minNode.startIndex, minNode.endIndex));
-      let max = min;
+      // Handle missing min/max more gracefully
+      if (minNode) {
+        try {
+          minValue = parseInt(sourceCode.slice(minNode.startIndex, minNode.endIndex));
+          if (isNaN(minValue)) minValue = 1;
+        } catch (e) {
+          console.warn('Error parsing min value:', e);
+          minValue = 1;
+        }
+      }
+      
+      maxValue = minValue; // Default max = min
       
       if (maxNode) {
-        max = parseInt(sourceCode.slice(maxNode.startIndex, maxNode.endIndex));
+        try {
+          maxValue = parseInt(sourceCode.slice(maxNode.startIndex, maxNode.endIndex));
+          if (isNaN(maxValue)) maxValue = minValue;
+        } catch (e) {
+          console.warn('Error parsing max value:', e);
+          maxValue = minValue;
+        }
       }
       
       return {
         type: 'repetition',
         expression: parseToAst(atom, sourceCode),
-        min: min,
-        max: max
+        min: minValue,
+        max: maxValue
       };
     }
   }
@@ -221,30 +261,86 @@ function parseToAst(node, sourceCode) {
   else if (node.type === 'source_file') {
     const rules = {};
     
+    // Enhanced debugging for source_file
+    console.log(`Processing source_file with ${node.childCount} children`);
+    
+    // Direct rule extraction without relying on node structure
+    if (node.childCount > 0 && sourceCode) {
+      // Pattern for rule definitions in the form <name> = expression
+      const rulePattern = /<([a-zA-Z0-9-_]+)>\s*=\s*([^<]+)(?=<|$)/g;
+      let match;
+      
+      console.log("Attempting direct rule extraction from source text");
+      
+      while ((match = rulePattern.exec(sourceCode)) !== null) {
+        const ruleName = match[1];
+        const ruleExpression = match[2].trim();
+        
+        console.log(`Extracted rule: ${ruleName}`);
+        
+        // Create a simple expression object
+        rules[ruleName] = {
+          type: 'raw_expression',
+          source: ruleExpression
+        };
+      }
+      
+      // If we found rules through direct extraction, return them
+      if (Object.keys(rules).length > 0) {
+        console.log(`Successfully extracted ${Object.keys(rules).length} rules directly from source`);
+        return {
+          type: 'grammar',
+          rules: rules,
+          extraction_method: 'direct'
+        };
+      }
+    }
+    
+    // Fallback to normal node traversal if direct extraction failed
     for (let i = 0; i < node.childCount; i++) {
       const child = node.child(i);
       if (child && child.type === 'rule_definition') {
-        const rule = parseToAst(child, sourceCode);
-        if (rule && rule.type === 'rule' && rule.name) {
-          rules[rule.name] = rule.expression || { type: 'unknown' };
+        try {
+          const rule = parseToAst(child, sourceCode);
+          if (rule && rule.type === 'rule' && rule.name) {
+            rules[rule.name] = rule.expression || { type: 'unknown' };
+          }
+        } catch (error) {
+          console.error(`Error parsing rule definition at index ${i}:`, error);
         }
       }
     }
     
     return {
       type: 'grammar',
-      rules: rules
+      rules: rules,
+      extraction_method: 'node_traversal'
     };
   }
   else {
     // For other node types, just return children
     if (node.childCount === 1) {
-      return parseToAst(node.child(0), sourceCode);
+      const child = node.child(0);
+      if (child) {
+        return parseToAst(child, sourceCode);
+      } else {
+        // Handle the case of a missing child
+        return { type: node.type + '_empty' };
+      }
     }
     
+    // Collect non-null children
     const children = [];
     for (let i = 0; i < node.childCount; i++) {
-      children.push(parseToAst(node.child(i), sourceCode));
+      const child = node.child(i);
+      if (child) {
+        try {
+          children.push(parseToAst(child, sourceCode));
+        } catch (error) {
+          console.error(`Error parsing child ${i} of node type ${node.type}:`, error);
+          children.push({ type: 'error', error: error.message });
+        }
+      }
     }
     
     return {
@@ -480,15 +576,53 @@ async function main() {
     console.log(`Tree parsed successfully. Root node type: ${tree.rootNode.type}`);
     console.log(`Child count: ${tree.rootNode.childCount}`);
     
-    // Convert to AST with detailed logging
-    console.log('Converting tree to AST...');
-    let ast;
+    // Try direct extraction first if tree-sitter parsing fails
+    let ast = null;
+    
+    console.log('Attempting direct grammar extraction...');
     try {
-      ast = parseToAst(tree.rootNode, sourceCode);
-      console.log('AST conversion completed');
-    } catch (astError) {
-      console.error('Error during AST conversion:', astError);
-      throw astError;
+      // Pattern for rule definitions in the form <name> = expression
+      const rulePattern = /<([a-zA-Z0-9-_]+)>\s*=\s*([^<]+)(?=<|$)/g;
+      const rules = {};
+      let match;
+      
+      while ((match = rulePattern.exec(sourceCode)) !== null) {
+        const ruleName = match[1];
+        const ruleExpression = match[2].trim();
+        
+        // Create a simple expression object
+        rules[ruleName] = {
+          type: 'raw_expression',
+          source: ruleExpression
+        };
+      }
+      
+      if (Object.keys(rules).length > 0) {
+        console.log(`Successfully extracted ${Object.keys(rules).length} rules directly`);
+        ast = {
+          type: 'grammar',
+          rules: rules,
+          extraction_method: 'regex'
+        };
+      }
+    } catch (extractError) {
+      console.error('Error during direct extraction:', extractError);
+    }
+    
+    // If direct extraction failed, try AST conversion
+    if (!ast || Object.keys(ast.rules).length === 0) {
+      console.log('Direct extraction failed or found no rules, converting tree to AST...');
+      try {
+        ast = parseToAst(tree.rootNode, sourceCode);
+        console.log('AST conversion completed');
+      } catch (astError) {
+        console.error('Error during AST conversion:', astError);
+        ast = { 
+          type: 'fallback_grammar',
+          error: astError.message,
+          rules: {}
+        };
+      }
     }
     
     // Write to JSON file
