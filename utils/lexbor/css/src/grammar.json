@@ -629,12 +629,42 @@
           "type": "CHOICE",
           "members": [
             {
-              "type": "FIELD",
-              "name": "arguments",
-              "content": {
-                "type": "SYMBOL",
-                "name": "expression"
-              }
+              "type": "SEQ",
+              "members": [
+                {
+                  "type": "FIELD",
+                  "name": "first_argument",
+                  "content": {
+                    "type": "SYMBOL",
+                    "name": "expression"
+                  }
+                },
+                {
+                  "type": "CHOICE",
+                  "members": [
+                    {
+                      "type": "SEQ",
+                      "members": [
+                        {
+                          "type": "STRING",
+                          "value": ","
+                        },
+                        {
+                          "type": "FIELD",
+                          "name": "optional_arguments",
+                          "content": {
+                            "type": "SYMBOL",
+                            "name": "expression"
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "type": "BLANK"
+                    }
+                  ]
+                }
+              ]
             },
             {
               "type": "BLANK"

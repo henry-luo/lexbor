@@ -1,6 +1,0 @@
-<length-percentage> = <length> | <percentage>
-<border-width> = <length> | thin | medium | thick
-<border-style> = none | hidden | dotted | dashed | solid | double | groove | ridge | inset | outset
-<color> = <hex-color> | <named-color>
-
-<border> = <border-width> || <border-style> || <color>

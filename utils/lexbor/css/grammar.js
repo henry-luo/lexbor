@@ -130,7 +130,13 @@ module.exports = grammar({
     function_call: $ => seq(
       field('name', /[a-zA-Z0-9-_]+/),
       '(',
-      optional(field('arguments', $.expression)),
+      optional(seq(
+        field('first_argument', $.expression),
+        optional(seq(
+          ',',
+          field('optional_arguments', $.expression)
+        ))
+      )),
       ')'
     )
   }

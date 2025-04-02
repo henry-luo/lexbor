@@ -172,7 +172,17 @@
     "type": "function_call",
     "named": true,
     "fields": {
-      "arguments": {
+      "first_argument": {
+        "multiple": false,
+        "required": false,
+        "types": [
+          {
+            "type": "expression",
+            "named": true
+          }
+        ]
+      },
+      "optional_arguments": {
         "multiple": false,
         "required": false,
         "types": [
