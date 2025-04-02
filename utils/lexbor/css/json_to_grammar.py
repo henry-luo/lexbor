@@ -193,8 +193,8 @@ def convert_json_to_grammar(json_file, output_file=None):
         print(result)
 
 if __name__ == "__main__":
-    json_file = "/Users/henryluo/Projects/lexbor/utils/lexbor/css/grammar.json"
-    output_file = "/Users/henryluo/Projects/lexbor/utils/lexbor/css/grammar_output.txt"
+    json_file = "./grammar.json"
+    output_file = "./grammar.output.txt"
     
     if len(sys.argv) > 1:
         json_file = sys.argv[1]

@@ -12,3 +12,5 @@ examples
 test
 *.pyc
 utils/lexbor/css/grammar.generated.txt
+utils/lexbor/css/grammar.json
+utils/lexbor/css/grammar.output.txt

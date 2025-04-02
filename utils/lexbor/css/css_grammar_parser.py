@@ -916,6 +916,10 @@ if __name__ == "__main__":
         ast = parse_css_grammar(file_path)
         print(f"AST generated successfully, saving to {output_path}")
         save_ast_to_json(ast, output_path)
+
+        from json_to_grammar import convert_json_to_grammar
+        grammar_text = convert_json_to_grammar("./grammar.json", "./grammar.output.txt")
+        print(f"Grammar text generated successfully, saving to grammar.output.txt")
         print("Processing complete!")
     except Exception as e:
         print(f"Error during processing: {e}")
