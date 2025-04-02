@@ -1,5 +1,3 @@
-// const {grammar} = require('tree-sitter-cli/grammar');
-
 module.exports = grammar({
   name: 'css_grammar',
 
@@ -7,11 +5,6 @@ module.exports = grammar({
   conflicts: $ => [
     [$.expression, $.sequence],
     // np[$.alternation, $.combinatorial]
-  ],
-
-  externals: $ => [
-    // Create external scanner tokens for special permission markers
-    $.permission_token,  // Recognizes ^WS, ^SORT, etc. as single tokens
   ],
 
   // Define token types explicitly for better syntax highlighting

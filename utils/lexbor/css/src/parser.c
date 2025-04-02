@@ -9,10 +9,10 @@
 #define LANGUAGE_VERSION 14
 #define STATE_COUNT 99
 #define LARGE_STATE_COUNT 2
-#define SYMBOL_COUNT 50
+#define SYMBOL_COUNT 49
 #define ALIAS_COUNT 0
-#define TOKEN_COUNT 32
-#define EXTERNAL_TOKEN_COUNT 1
+#define TOKEN_COUNT 31
+#define EXTERNAL_TOKEN_COUNT 0
 #define FIELD_COUNT 11
 #define MAX_ALIAS_SEQUENCE_LENGTH 6
 #define MAX_RESERVED_WORD_SET_SIZE 0
@@ -50,25 +50,24 @@ enum ts_symbol_identifiers {
   anon_sym_COMMA = 28,
   anon_sym_RBRACE = 29,
   anon_sym_QMARK = 30,
-  sym_permission_token = 31,
-  sym_source_file = 32,
-  sym__definition = 33,
-  sym_comment = 34,
-  sym_rule_definition = 35,
-  sym_expression = 36,
-  sym_alternation = 37,
-  sym_combinatorial = 38,
-  sym_sequence = 39,
-  sym_atom = 40,
-  sym_reference = 41,
-  sym_constraints = 42,
-  sym_group = 43,
-  sym_repetition = 44,
-  sym_optional = 45,
-  sym_function_call = 46,
-  aux_sym_source_file_repeat1 = 47,
-  aux_sym_sequence_repeat1 = 48,
-  aux_sym_constraints_repeat1 = 49,
+  sym_source_file = 31,
+  sym__definition = 32,
+  sym_comment = 33,
+  sym_rule_definition = 34,
+  sym_expression = 35,
+  sym_alternation = 36,
+  sym_combinatorial = 37,
+  sym_sequence = 38,
+  sym_atom = 39,
+  sym_reference = 40,
+  sym_constraints = 41,
+  sym_group = 42,
+  sym_repetition = 43,
+  sym_optional = 44,
+  sym_function_call = 45,
+  aux_sym_source_file_repeat1 = 46,
+  aux_sym_sequence_repeat1 = 47,
+  aux_sym_constraints_repeat1 = 48,
 };
 
 static const char * const ts_symbol_names[] = {
@@ -103,7 +102,6 @@ static const char * const ts_symbol_names[] = {
   [anon_sym_COMMA] = ",",
   [anon_sym_RBRACE] = "}",
   [anon_sym_QMARK] = "\?",
-  [sym_permission_token] = "permission_token",
   [sym_source_file] = "source_file",
   [sym__definition] = "_definition",
   [sym_comment] = "comment",
@@ -156,7 +154,6 @@ static const TSSymbol ts_symbol_map[] = {
   [anon_sym_COMMA] = anon_sym_COMMA,
   [anon_sym_RBRACE] = anon_sym_RBRACE,
   [anon_sym_QMARK] = anon_sym_QMARK,
-  [sym_permission_token] = sym_permission_token,
   [sym_source_file] = sym_source_file,
   [sym__definition] = sym__definition,
   [sym_comment] = sym_comment,
@@ -301,10 +298,6 @@ static const TSSymbolMetadata ts_symbol_metadata[] = {
   [anon_sym_QMARK] = {
     .visible = true,
     .named = false,
-  },
-  [sym_permission_token] = {
-    .visible = true,
-    .named = true,
   },
   [sym_source_file] = {
     .visible = true,
@@ -944,7 +937,7 @@ static bool ts_lex(TSLexer *lexer, TSStateId state) {
 }
 
 static const TSLexMode ts_lex_modes[STATE_COUNT] = {
-  [0] = {.lex_state = 0, .external_lex_state = 1},
+  [0] = {.lex_state = 0},
   [1] = {.lex_state = 0},
   [2] = {.lex_state = 3},
   [3] = {.lex_state = 3},
@@ -1074,7 +1067,6 @@ static const uint16_t ts_parse_table[LARGE_STATE_COUNT][SYMBOL_COUNT] = {
     [anon_sym_COMMA] = ACTIONS(1),
     [anon_sym_RBRACE] = ACTIONS(1),
     [anon_sym_QMARK] = ACTIONS(1),
-    [sym_permission_token] = ACTIONS(1),
   },
   [STATE(1)] = {
     [sym_source_file] = STATE(95),
@@ -3042,29 +3034,9 @@ static const TSParseActionEntry ts_parse_actions[] = {
   [266] = {.entry = {.count = 1, .reusable = true}}, SHIFT(74),
 };
 
-enum ts_external_scanner_symbol_identifiers {
-  ts_external_token_permission_token = 0,
-};
-
-static const TSSymbol ts_external_scanner_symbol_map[EXTERNAL_TOKEN_COUNT] = {
-  [ts_external_token_permission_token] = sym_permission_token,
-};
-
-static const bool ts_external_scanner_states[2][EXTERNAL_TOKEN_COUNT] = {
-  [1] = {
-    [ts_external_token_permission_token] = true,
-  },
-};
-
 #ifdef __cplusplus
 extern "C" {
 #endif
-void *tree_sitter_css_grammar_external_scanner_create(void);
-void tree_sitter_css_grammar_external_scanner_destroy(void *);
-bool tree_sitter_css_grammar_external_scanner_scan(void *, TSLexer *, const bool *);
-unsigned tree_sitter_css_grammar_external_scanner_serialize(void *, char *);
-void tree_sitter_css_grammar_external_scanner_deserialize(void *, const char *, unsigned);
-
 #ifdef TREE_SITTER_HIDE_SYMBOLS
 #define TS_PUBLIC
 #elif defined(_WIN32)
@@ -3099,15 +3071,6 @@ TS_PUBLIC const TSLanguage *tree_sitter_css_grammar(void) {
     .alias_sequences = &ts_alias_sequences[0][0],
     .lex_modes = (const void*)ts_lex_modes,
     .lex_fn = ts_lex,
-    .external_scanner = {
-      &ts_external_scanner_states[0][0],
-      ts_external_scanner_symbol_map,
-      tree_sitter_css_grammar_external_scanner_create,
-      tree_sitter_css_grammar_external_scanner_destroy,
-      tree_sitter_css_grammar_external_scanner_scan,
-      tree_sitter_css_grammar_external_scanner_serialize,
-      tree_sitter_css_grammar_external_scanner_deserialize,
-    },
     .primary_state_ids = ts_primary_state_ids,
   };
   return &language;
