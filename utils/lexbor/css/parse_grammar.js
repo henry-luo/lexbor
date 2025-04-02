@@ -581,20 +581,34 @@ async function main() {
     
     console.log('Attempting direct grammar extraction...');
     try {
-      // Pattern for rule definitions in the form <name> = expression
-      const rulePattern = /<([a-zA-Z0-9-_]+)>\s*=\s*([^<]+)(?=<|$)/g;
+      // Improved regex pattern for rule definitions that handles nested angle brackets
+      // This uses a non-greedy approach with negative lookahead to find rule boundaries
       const rules = {};
-      let match;
       
-      while ((match = rulePattern.exec(sourceCode)) !== null) {
-        const ruleName = match[1];
-        const ruleExpression = match[2].trim();
+      // Approach 1: Better regex with balanced angle bracket handling 
+      const ruleDefinitions = sourceCode.split(/(?=<[a-zA-Z0-9-_]+>\s*=)/);
+      
+      for (const definition of ruleDefinitions) {
+        // Skip empty definitions
+        if (!definition.trim()) continue;
         
-        // Create a simple expression object
-        rules[ruleName] = {
-          type: 'raw_expression',
-          source: ruleExpression
-        };
+        const nameMatch = definition.match(/<([a-zA-Z0-9-_]+)>/);
+        if (nameMatch) {
+          const ruleName = nameMatch[1];
+          
+          // Find the rule content after the equals sign
+          const contentMatch = definition.match(/=\s*([\s\S]+?)(?=(?:<[a-zA-Z0-9-_]+>\s*=)|$)/);
+          const ruleExpression = contentMatch ? contentMatch[1].trim() : "";
+          
+          if (ruleName && ruleExpression) {
+            console.log(`Extracted rule: ${ruleName}`);
+            
+            rules[ruleName] = {
+              type: 'raw_expression',
+              source: ruleExpression
+            };
+          }
+        }
       }
       
       if (Object.keys(rules).length > 0) {
@@ -602,7 +616,7 @@ async function main() {
         ast = {
           type: 'grammar',
           rules: rules,
-          extraction_method: 'regex'
+          extraction_method: 'split_regex'
         };
       }
     } catch (extractError) {
