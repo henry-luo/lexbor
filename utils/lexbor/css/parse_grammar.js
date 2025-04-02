@@ -6,12 +6,65 @@ const { spawn, execSync } = require('child_process');
 
 // Convert Tree-sitter nodes to AST
 function parseToAst(node, sourceCode) {
+  // Add null check at the beginning
+  if (!node) {
+    console.warn('Encountered null node during parsing');
+    return { type: 'unknown' };
+  }
+  
+  // Ensure node has a type property
+  if (typeof node.type !== 'string') {
+    console.warn(`Node missing type property: ${JSON.stringify(node).substring(0, 100)}...`);
+    return { type: 'unknown', raw: node };
+  }
+
   if (node.type === 'rule_definition') {
-    const nameNode = node.child(0);
-    const exprNode = node.child(2);
+    // Find child nodes by type instead of fixed position
+    let nameNode = null;
+    let exprNode = null;
+    
+    // Debugging: log all children
+    console.log(`Rule definition has ${node.childCount} children`);
+    for (let i = 0; i < node.childCount; i++) {
+      const child = node.child(i);
+      console.log(`  Child ${i}: ${child ? child.type : 'null'}`);
+      
+      if (child) {
+        if (child.type === 'rule_name') {
+          nameNode = child;
+        } else if (child.type === 'expression') {
+          exprNode = child;
+        }
+      }
+    }
+    
+    // Fallback: try fixed positions if type matching failed
+    if (!nameNode && node.childCount > 0) nameNode = node.child(0);
+    if (!exprNode && node.childCount > 1) exprNode = node.child(1);
+    
+    // Add null checks for child nodes
+    if (!nameNode || !exprNode) {
+      console.warn(`Missing required child nodes in rule_definition: ${nameNode ? 'has name' : 'no name'}, ${exprNode ? 'has expr' : 'no expr'}`);
+      
+      // Create a partial rule with available information
+      const result = { type: 'rule' };
+      if (nameNode) {
+        let ruleName = sourceCode.slice(nameNode.startIndex, nameNode.endIndex);
+        // Remove angle brackets if present
+        ruleName = ruleName.replace(/^<|>$/g, '');
+        result.name = ruleName;
+      }
+      return result;
+    }
+    
+    // Extract rule name - handle both with and without angle brackets
+    let ruleName = sourceCode.slice(nameNode.startIndex, nameNode.endIndex);
+    // Remove angle brackets if present
+    ruleName = ruleName.replace(/^<|>$/g, '');
+    
     return {
       type: 'rule',
-      name: sourceCode.slice(nameNode.startIndex + 1, nameNode.endIndex - 1), // Remove <>
+      name: ruleName,
       expression: parseToAst(exprNode, sourceCode)
     };
   }
@@ -170,9 +223,11 @@ function parseToAst(node, sourceCode) {
     
     for (let i = 0; i < node.childCount; i++) {
       const child = node.child(i);
-      if (child.type === 'rule_definition') {
+      if (child && child.type === 'rule_definition') {
         const rule = parseToAst(child, sourceCode);
-        rules[rule.name] = rule.expression;
+        if (rule && rule.type === 'rule' && rule.name) {
+          rules[rule.name] = rule.expression || { type: 'unknown' };
+        }
       }
     }
     
@@ -199,40 +254,13 @@ function parseToAst(node, sourceCode) {
   }
 }
 
-async function invokeParser() {
-  return {
-    parse: function(sourceCode) {
-      // Create a temporary file if we're parsing from a string
-      const tempFile = path.join(__dirname, 'grammar.txt');
-      fs.writeFileSync(tempFile, sourceCode);
-      
-      try {
-        console.log('Invoking tree-sitter parse command...');
-        
-        // Get the S-expression output from tree-sitter CLI
-        const sexpOutput = execSync('npx tree-sitter parse grammar.txt', {
-          cwd: __dirname,
-          encoding: 'utf8'
-        });
-        
-        // Convert S-expression to a node structure
-        const rootNode = parseSExpression(sexpOutput);
-        
-        return {
-          rootNode: rootNode
-        };
-      } catch (error) {
-        console.error('Error running tree-sitter parse command:', error);
-        throw error;
-      }
-    }
-  };
-}
-
 // Parse the S-expression output from tree-sitter into a node structure
 function parseSExpression(sexp) {
-  // Basic implementation to convert S-expression to a node-like structure
-  // This is a simplified version and might need adjustments
+  // Add safety check for empty input
+  if (!sexp || typeof sexp !== 'string') {
+    console.error('Invalid S-expression input:', sexp);
+    return null;
+  }
   
   // Strip ANSI color codes which tree-sitter CLI might include
   sexp = sexp.replace(/\x1B\[\d+m/g, '');
@@ -241,6 +269,7 @@ function parseSExpression(sexp) {
   const match = sexp.match(/\((\w+)(?:\s+\[(\d+), (\d+)\] - \[(\d+), (\d+)\])?/);
   
   if (!match) {
+    console.warn(`Failed to parse S-expression: ${sexp.substring(0, 100)}...`);
     return null;
   }
   
@@ -267,76 +296,236 @@ function parseSExpression(sexp) {
   };
   
   // Find child nodes by parsing nested S-expressions
-  // This is a simplified approach and may need improvement
-  let depth = 0;
-  let start = -1;
-  
-  for (let i = 0; i < sexp.length; i++) {
-    if (sexp[i] === '(') {
-      depth++;
-      if (depth === 2) {
-        start = i;
+  // Use a more robust parsing approach
+  try {
+    let depth = 0;
+    let start = -1;
+    let inString = false;
+    let escapeNext = false;
+    
+    for (let i = 0; i < sexp.length; i++) {
+      // Handle string literals properly
+      if (sexp[i] === '"' && !escapeNext) {
+        inString = !inString;
+      } else if (sexp[i] === '\\' && inString) {
+        escapeNext = true;
+        continue;
       }
-    } else if (sexp[i] === ')') {
-      if (depth === 2 && start !== -1) {
-        const childSexp = sexp.substring(start, i + 1);
-        const childNode = parseSExpression(childSexp);
-        if (childNode) {
-          node.children.push(childNode);
+      
+      escapeNext = false;
+      
+      // Only count parentheses outside of strings
+      if (!inString) {
+        if (sexp[i] === '(') {
+          depth++;
+          if (depth === 2) {
+            start = i;
+          }
+        } else if (sexp[i] === ')') {
+          if (depth === 2 && start !== -1) {
+            const childSexp = sexp.substring(start, i + 1);
+            const childNode = parseSExpression(childSexp);
+            if (childNode) {
+              node.children.push(childNode);
+            }
+            start = -1;
+          }
+          depth--;
         }
-        start = -1;
       }
-      depth--;
     }
+  } catch (error) {
+    console.error('Error parsing S-expression children:', error);
   }
   
   return node;
 }
 
-async function main() {
-  // Define file paths
-  const grammarFile = path.join(__dirname, 'grammar.txt');
-  const outputFile = path.join(__dirname, 'grammar.output.json');
+// Add a debug function to print node structure
+function debugNode(node, indent = 0) {
+  if (!node) return;
   
-  // Ensure the grammar file exists
-  if (!fs.existsSync(grammarFile)) {
-    console.error(`Error: Grammar file not found at ${grammarFile}`);
+  const spacing = ' '.repeat(indent * 2);
+  console.log(`${spacing}Node: ${node.type} [${node.startIndex}:${node.endIndex}]`);
+  
+  for (let i = 0; i < node.childCount; i++) {
+    const child = node.child(i);
+    if (child) {
+      debugNode(child, indent + 1);
+    }
+  }
+}
+
+async function invokeParser() {
+  return {
+    parse: function(sourceCode, grammarFilePath) {
+      // Use the provided grammar file path or default to grammar.txt
+      const tempFile = grammarFilePath || path.join(__dirname, 'grammar.txt');
+      
+      // Save the grammar content to the file
+      fs.writeFileSync(tempFile, sourceCode);
+      
+      try {
+        console.log('Invoking tree-sitter parse command...');
+        console.log(`Using grammar file: ${path.basename(tempFile)}`);
+        
+        // Try to use the grammar.js to generate the parser first
+        try {
+          console.log('Attempting to generate parser from grammar.js...');
+          execSync('npx tree-sitter generate', {
+            cwd: __dirname,
+            stdio: 'inherit'
+          });
+        } catch (genError) {
+          console.warn('Warning: Could not generate parser from grammar.js:', genError.message);
+        }
+        
+        // Get the S-expression output from tree-sitter CLI
+        let sexpOutput;
+        try {
+          sexpOutput = execSync(`npx tree-sitter parse "${tempFile}"`, {
+            cwd: __dirname,
+            encoding: 'utf8'
+          });
+        } catch (parseError) {
+          console.error('Tree-sitter parse command failed:', parseError.message);
+          console.log('Trying alternative approach...');
+          
+          // Try with a different approach - parse using the grammar.js directly
+          sexpOutput = execSync(`npx tree-sitter parse "${tempFile}" --quiet`, {
+            cwd: __dirname,
+            encoding: 'utf8'
+          });
+        }
+        
+        if (!sexpOutput || sexpOutput.trim().length === 0) {
+          console.error('Tree-sitter returned empty output');
+          throw new Error('Empty parser output');
+        }
+        
+        console.log(`Tree-sitter output length: ${sexpOutput.length} bytes`);
+        console.log(`First 100 chars: ${sexpOutput.substring(0, 100)}...`);
+        
+        // Convert S-expression to a node structure
+        const rootNode = parseSExpression(sexpOutput);
+        
+        if (!rootNode) {
+          console.error('Failed to parse S-expression into node structure');
+          throw new Error('S-expression parsing failed');
+        }
+        
+        console.log('Root node structure:');
+        debugNode(rootNode, 0);
+        
+        return {
+          rootNode: rootNode
+        };
+      } catch (error) {
+        console.error('Error running tree-sitter parse command:', error);
+        throw error;
+      }
+    }
+  };
+}
+
+async function main() {
+  // Use command line args if provided, otherwise use defaults
+  const args = process.argv.slice(2);
+  const grammarFile = args[0] || path.join(__dirname, 'grammar.test.txt');
+  const outputFile = args[1] || path.join(__dirname, 'grammar.output.json');
+  
+  // Check if we should use the grammar.js file directly
+  const useGrammarJs = args.includes('--use-grammar-js');
+  
+  // Try to locate the grammar file - check multiple options
+  const possibleFiles = [
+    grammarFile,
+    path.join(__dirname, 'grammar.test.txt'),
+    path.join(__dirname, 'grammar.txt'),
+    path.join(__dirname, 'grammar.js')
+  ];
+  
+  let actualGrammarFile = null;
+  
+  for (const file of possibleFiles) {
+    if (fs.existsSync(file)) {
+      actualGrammarFile = file;
+      break;
+    }
+  }
+  
+  if (!actualGrammarFile) {
+    console.error(`Error: No grammar file found. Checked: ${possibleFiles.join(', ')}`);
     process.exit(1);
   }
   
+  console.log(`Found grammar file: ${actualGrammarFile}`);
+  
   try {
-    console.log(`Parsing grammar from ${grammarFile}...`);
+    console.log(`Parsing grammar from ${actualGrammarFile}...`);
     const parser = await invokeParser();
     
     // Read the grammar file
-    const sourceCode = fs.readFileSync(grammarFile, 'utf8');
+    const sourceCode = fs.readFileSync(actualGrammarFile, 'utf8');
+    console.log(`Grammar file loaded: ${sourceCode.length} bytes`);
+    console.log(`First 100 chars: ${sourceCode.substring(0, 100)}...`);
     
     // Parse the file
-    const tree = parser.parse(sourceCode);
+    const tree = parser.parse(sourceCode, actualGrammarFile);
     
-    // Convert to AST
-    const ast = parseToAst(tree.rootNode, sourceCode);
+    if (!tree || !tree.rootNode) {
+      throw new Error('Parser returned null or invalid tree');
+    }
+    
+    console.log(`Tree parsed successfully. Root node type: ${tree.rootNode.type}`);
+    console.log(`Child count: ${tree.rootNode.childCount}`);
+    
+    // Convert to AST with detailed logging
+    console.log('Converting tree to AST...');
+    let ast;
+    try {
+      ast = parseToAst(tree.rootNode, sourceCode);
+      console.log('AST conversion completed');
+    } catch (astError) {
+      console.error('Error during AST conversion:', astError);
+      throw astError;
+    }
     
     // Write to JSON file
     fs.writeFileSync(outputFile, JSON.stringify(ast, null, 2));
     
     console.log(`Successfully parsed grammar. AST saved to ${outputFile}`);
-    console.log(`Found ${Object.keys(ast.rules).length} rules in the grammar.`);
     
-    // Print some statistics about the grammar
-    const ruleTypes = {};
-    for (const ruleName in ast.rules) {
-      const ruleType = ast.rules[ruleName]?.type || 'unknown';
-      ruleTypes[ruleType] = (ruleTypes[ruleType] || 0) + 1;
-    }
-    
-    console.log("\nRule expression types:");
-    for (const ruleType in ruleTypes) {
-      console.log(`  ${ruleType}: ${ruleTypes[ruleType]}`);
+    // Additional safety check for rules
+    if (ast && ast.rules) {
+      const ruleCount = Object.keys(ast.rules).length;
+      console.log(`Found ${ruleCount} rules in the grammar.`);
+      
+      if (ruleCount === 0) {
+        console.warn('WARNING: No rules were found in the parsed grammar!');
+        console.warn('This likely means the tree-sitter parser did not recognize rule definitions.');
+        console.warn('Check if your grammar file format matches what the parser expects.');
+      } else {
+        // Print some statistics about the grammar
+        const ruleTypes = {};
+        for (const ruleName in ast.rules) {
+          if (!ast.rules[ruleName]) continue;
+          const ruleType = ast.rules[ruleName]?.type || 'unknown';
+          ruleTypes[ruleType] = (ruleTypes[ruleType] || 0) + 1;
+        }
+        
+        console.log("\nRule expression types:");
+        for (const ruleType in ruleTypes) {
+          console.log(`  ${ruleType}: ${ruleTypes[ruleType]}`);
+        }
+      }
+    } else {
+      console.warn('No rules found in parsed grammar');
     }
     
   } catch (error) {
     console.error('Error processing grammar:', error);
+    console.error('Stack trace:', error.stack);
     process.exit(1);
   }
 }

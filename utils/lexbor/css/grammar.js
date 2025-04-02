@@ -3,8 +3,7 @@ module.exports = grammar({
 
   // Simplified conflict resolution - focusing on major rule conflicts only
   conflicts: $ => [
-    [$.expression, $.sequence],
-    // np[$.alternation, $.combinatorial]
+    [$.expression, $.sequence]
   ],
 
   // Define token types explicitly for better syntax highlighting
@@ -36,7 +35,8 @@ module.exports = grammar({
 
     // Expression hierarchy with clear precedence
     expression: $ => choice(
-      prec.left(3, $.alternation),
+      prec.left(4, $.alternation),
+      prec.left(3, $.double_pipe),
       prec.left(2, $.combinatorial),
       prec.left(1, $.sequence),
       prec(0, $.atom)
@@ -48,25 +48,29 @@ module.exports = grammar({
       field('right', $.expression)
     )),
 
+    double_pipe: $ => prec.left(seq(
+      field('left', $.expression),
+      '||',
+      field('right', $.expression)
+    )),
+
     combinatorial: $ => prec.left(seq(
       field('left', $.expression),
       '&&',
       field('right', $.expression)
     )),
 
-    // Simplified sequence that doesn't handle permissions directly
     sequence: $ => prec.right(seq(
       repeat1($.atom)
     )),
 
-    // Permission becomes a standalone atom, not part of sequence or reference
     atom: $ => choice(
       $.literal,
       $.reference,
       $.permission,
       $.group,
       $.repetition,
-      $.optional,
+      $.option,
       $.function_call
     ),
 
@@ -77,7 +81,6 @@ module.exports = grammar({
       '#', '/'
     )),
 
-    // Simplified reference with no permission handling
     reference: $ => seq(
       '<',
       field('name', /[a-zA-Z0-9-_]+/),
@@ -96,7 +99,6 @@ module.exports = grammar({
       ))
     )),
 
-    // Permissions as a separate atom type (not part of references or sequences)
     permission: $ => token(seq(
       '^',
       /[A-Z]+/
@@ -120,7 +122,7 @@ module.exports = grammar({
       )
     ),
 
-    optional: $ => seq(
+    option: $ => seq(
       field('element', $.atom),
       '?'
     ),
