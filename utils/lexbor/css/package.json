@@ -7,5 +7,5 @@
 "scripts":{
     "generate":"tree-sitter generate",
     "parse":"tree-sitter parse grammar.txt",
-    "output": "node parse_grammar.js grammar.test.txt"
+    "output": "node parse_grammar.js grammar.txt"
 }}
