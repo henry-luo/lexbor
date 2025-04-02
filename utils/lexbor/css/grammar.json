@@ -1,0 +1,10 @@
+[
+  {
+    "type": "Rule",
+    "name": "global",
+    "value": {
+      "type": "Literal",
+      "value": "initial"
+    }
+  }
+]
