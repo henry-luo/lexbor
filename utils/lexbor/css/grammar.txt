@@ -41,7 +41,7 @@
                             <hsl()> | <hsla()> | <hwb()> |
                             <lab()> | <lch()> | <oklab()> | <oklch()>
 
-<hex-color> = #[<hex nows>{3}^WS | <hex nows>{6}^WS | <hex nows>{8}^WS]^WS
+<hex-color> = #[<hex-nows>{3}^WS | <hex-nows>{6}^WS | <hex-nows>{8}^WS]^WS
 <alpha-value> = <number> | <percentage>
 <hue> = <number> | <angle>
 <named-color> = aliceblue | antiquewhite | aqua | aquamarine | azure | beige
@@ -198,14 +198,12 @@
 <letter-spacing> = normal | <length>
 <hanging-punctuation> = none | [ first || [force-end | allow-end] || last ]
 
-<!--
+/*
     <font-family> = [<family-name> | <generic-family>]#
-    
     <family-name> it's random string token.
     <generic-family> it's a combinatorial bomb.
-
     For this reason, we will specify the values for the tests ourselves.
--->
+*/
 
 <font-family> = [serif,^WS sans-serif,^WS '"Verdana HAHA"',^WS cursive,^WS Helvetica]#
 <font-weight> = <font-weight-absolute> | bolder | lighter

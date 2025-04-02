@@ -6,6 +6,6 @@
 "devDependencies":{"tree-sitter-cli":"^0.25.3"},
 "scripts":{
     "generate":"tree-sitter generate",
-    "parse":"tree-sitter parse grammar.test.txt",
+    "parse":"tree-sitter parse grammar.txt",
     "output": "node parse_grammar.js grammar.test.txt"
 }}

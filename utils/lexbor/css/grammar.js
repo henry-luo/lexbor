@@ -9,7 +9,8 @@ module.exports = grammar({
   // Define token types explicitly for better syntax highlighting
   extras: $ => [
     $.comment,
-    /\s/
+    /[ \t]+/,
+    $.continuation
   ],
 
   rules: {
@@ -17,21 +18,27 @@ module.exports = grammar({
 
     _definition: $ => choice(
       $.rule_definition,
-      $.comment
+      $.comment,
+      $.newline
     ),
+
+    newline: $ => /[\n\r]+([ \t]+[\n\r]+)?/,
+
+    continuation: $ => token(/[\n\r]+[ \t]+/),
 
     comment: $ => choice(
       seq('//', /.*/),
-      seq('/*', /[^*]*\*+([^/*][^*]*\*+)*/, '/')
+      seq('/*', /[^*]*\*+([^/*][^*]*\*+)*/, '/'),
     ),
 
     rule_definition: $ => seq(
       field('name', $.rule_name),
       '=',
-      field('value', $.expression)
+      field('value', $.expression), 
+      $.newline
     ),
 
-    rule_name: $ => /<[a-zA-Z0-9-_]+>/,
+    rule_name: $ => /<[a-zA-Z0-9-_]+(\(\))?>/,  // name with optional ()
 
     // Expression hierarchy with clear precedence
     expression: $ => choice(
@@ -44,8 +51,8 @@ module.exports = grammar({
 
     alternation: $ => prec.left(seq(
       field('left', $.expression),
-      '|',
-      field('right', $.expression)
+      repeat1(prec.left(seq('|', field('right', $.expression)))),
+      repeat(prec.left(seq($.continuation, '|', field('right', $.expression))))
     )),
 
     double_pipe: $ => prec.left(seq(
@@ -60,30 +67,30 @@ module.exports = grammar({
       field('right', $.expression)
     )),
 
-    sequence: $ => prec.right(seq(
-      repeat1($.atom)
-    )),
+    sequence: $ => prec.left(repeat1($.atom)),
 
     atom: $ => choice(
-      $.literal,
       $.reference,
       $.permission,
       $.group,
+      prec(1, $.function_call),
       $.repetition,
       $.option,
-      $.function_call
+      prec(0, $.literal)
     ),
 
-    literal: $ => token(choice(
+    /* writting literal as token gives problem to function_call parsing */ 
+    literal: $ => choice(
       /[a-zA-Z0-9-_]+/,
       seq('"', /[^"]*/, '"'),
       seq("'", /[^']*/, "'"),
-      '#', '/'
-    )),
+      '#', '/', ','
+    ),
 
     reference: $ => seq(
       '<',
       field('name', /[a-zA-Z0-9-_]+/),
+      optional(seq('(',')')),  // function name
       optional($.constraints),
       '>'
     ),
@@ -104,23 +111,21 @@ module.exports = grammar({
       /[A-Z]+/
     )),
 
-    group: $ => choice(
-      seq('[', field('content', $.expression), ']'),
-      seq('(', field('content', $.expression), ')')
+    group: $ => seq('[', field('content', $.expression), ']'),
+
+    occurrence: $ => seq(
+      '{',
+      field('min', /[0-9]+/),
+      optional(seq(',', optional(field('max', /[0-9]+/)))),
+      '}'
     ),
 
-    repetition: $ => choice(
+    repetition: $ => prec.right(5, choice(
       seq(field('element', $.atom), '*'),
-      seq(field('element', $.atom), '+'),
-      seq(field('element', $.atom), '#'),
-      seq(
-        field('element', $.atom),
-        '{',
-        field('min', /[0-9]+/),
-        optional(seq(',', optional(field('max', /[0-9]+/)))),
-        '}'
-      )
-    ),
+      seq(field('element', $.atom), '+'),  // '+' for 1+ repeatition separeted by space
+      seq(field('element', $.atom),  '#', optional($.occurrence)), // '#' for 1+ repeatition separeted by ','
+      seq(field('element', $.atom), $.occurrence)
+    )),
 
     option: $ => seq(
       field('element', $.atom),
@@ -132,10 +137,7 @@ module.exports = grammar({
       '(',
       optional(seq(
         field('first_argument', $.expression),
-        optional(seq(
-          ',',
-          field('optional_arguments', $.expression)
-        ))
+        repeat(seq(',', $.expression))
       )),
       ')'
     )

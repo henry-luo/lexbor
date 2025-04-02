@@ -14,7 +14,7 @@
         ]
       },
       "right": {
-        "multiple": false,
+        "multiple": true,
         "required": true,
         "types": [
           {
@@ -23,6 +23,16 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "continuation",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -181,17 +191,17 @@
             "named": true
           }
         ]
-      },
-      "optional_arguments": {
-        "multiple": false,
-        "required": false,
-        "types": [
-          {
-            "type": "expression",
-            "named": true
-          }
-        ]
       }
+    },
+    "children": {
+      "multiple": true,
+      "required": false,
+      "types": [
+        {
+          "type": "expression",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -209,6 +219,16 @@
         ]
       }
     }
+  },
+  {
+    "type": "literal",
+    "named": true,
+    "fields": {}
+  },
+  {
+    "type": "occurrence",
+    "named": true,
+    "fields": {}
   },
   {
     "type": "option",
@@ -255,6 +275,16 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": false,
+      "required": false,
+      "types": [
+        {
+          "type": "occurrence",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -281,6 +311,16 @@
           }
         ]
       }
+    },
+    "children": {
+      "multiple": false,
+      "required": true,
+      "types": [
+        {
+          "type": "newline",
+          "named": true
+        }
+      ]
     }
   },
   {
@@ -312,6 +352,10 @@
           "named": true
         },
         {
+          "type": "newline",
+          "named": true
+        },
+        {
           "type": "rule_definition",
           "named": true
         }
@@ -332,6 +376,10 @@
   },
   {
     "type": "&&",
+    "named": false
+  },
+  {
+    "type": "'",
     "named": false
   },
   {
@@ -391,7 +439,12 @@
     "named": false
   },
   {
-    "type": "literal",
+    "type": "continuation",
+    "named": true,
+    "extra": true
+  },
+  {
+    "type": "newline",
     "named": true
   },
   {
