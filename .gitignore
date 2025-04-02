@@ -14,3 +14,5 @@ test
 utils/lexbor/css/grammar.generated.txt
 utils/lexbor/css/grammar.json
 utils/lexbor/css/grammar.output.txt
+node_modules
+utils/lexbor/css/package-lock.json
