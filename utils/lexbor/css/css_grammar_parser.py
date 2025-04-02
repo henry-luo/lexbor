@@ -362,6 +362,7 @@ class Parser:
                 stuck_count += 1
                 if stuck_count > 5:  # If we're stuck for too many iterations
                     print(f"WARNING: Parser appears to be stuck at position {self.current}, token: {self._current().type}")
+                    self._print_token_context(10)  # Print surrounding tokens for context
                     print(f"Skipping this token and continuing...")
                     self._advance()  # Force advance
                     stuck_count = 0
@@ -372,6 +373,7 @@ class Parser:
             if iterations % 1000 == 0:
                 print(f"Parsing... processed {iterations} iterations, current position: {self.current}/{len(self.tokens)}")
                 print(f"Current token: {self._current().type} at line {self._current().line}, column {self._current().column}")
+                self._print_token_context(5)  # Print surrounding tokens
 
             # Skip whitespace, comments, newlines
             if self._check(TokenType.COMMENT) or self._check(TokenType.WHITESPACE) or self._check(TokenType.NEWLINE):
@@ -380,11 +382,20 @@ class Parser:
 
             # Parse a rule if we encounter an opening angle bracket
             if self._check(TokenType.OPEN_ANGLE):
-                rule = self._parse_rule()
-                rules.append(rule)
-                self.rule_count += 1
-                if self.rule_count % 5 == 0:
-                    print(f"Parsed {self.rule_count} rules so far")
+                try:
+                    rule = self._parse_rule()
+                    rules.append(rule)
+                    self.rule_count += 1
+                    if self.rule_count % 5 == 0:
+                        print(f"Parsed {self.rule_count} rules so far")
+                except Exception as e:
+                    print(f"Error parsing rule: {str(e)}")
+                    print("Current token context:")
+                    self._print_token_context(10)
+                    
+                    # Try to recover by skipping to the next rule
+                    print("Attempting to recover from rule parsing error...")
+                    self._recover_to_next_rule()
             else:
                 # If we're not at a rule start and not at whitespace, skip this token
                 print(f"Unexpected token outside rule definition: {self._current().type} at line {self._current().line}, column {self._current().column}")
@@ -398,173 +409,408 @@ class Parser:
         print(f"Parsing complete: {len(rules)} rules found")
         return rules
 
+    def _print_token_context(self, context_size=5):
+        """Print surrounding tokens for better debugging context"""
+        start = max(0, self.current - context_size)
+        end = min(len(self.tokens), self.current + context_size + 1)
+        
+        print(f"Token context (current position: {self.current}):")
+        for i in range(start, end):
+            token = self.tokens[i]
+            pointer = "-> " if i == self.current else "   "
+            value_display = repr(token.value) if token.type in [TokenType.IDENTIFIER, TokenType.STRING] else token.value
+            print(f"{pointer}{i}: {token.type.name} '{value_display}' at line {token.line}, col {token.column}")
+
+    def _recover_to_next_rule(self):
+        """Skip ahead to the next rule definition"""
+        print("Skipping ahead to find the next rule definition...")
+        
+        # Start from current position and look for a rule start
+        start_pos = self.current
+        max_lookahead = 1000
+        
+        for i in range(max_lookahead):
+            if self._is_at_end():
+                print("Reached end of file while recovering")
+                return
+                
+            # If we find a potential rule start
+            if self._check(TokenType.OPEN_ANGLE) and self._check_rule_start():
+                print(f"Found a new rule start at position {self.current}")
+                return
+                
+            self._advance()
+            
+        print(f"Could not find next rule start after skipping {max_lookahead} tokens")
+
     def _parse_rule(self):
         """Parse a CSS grammar rule that may span multiple lines"""
         print(f"Parsing rule at token position {self.current}")
         self._consume(TokenType.OPEN_ANGLE, "Expected '<' for rule name")
 
-        name_tokens = []
+        # Parse the rule name and constraints
+        try:
+            name_and_constraints = self._extract_rule_name_and_constraints()
+            name = name_and_constraints['name']
+            constraints = name_and_constraints['constraints']
+            
+            print(f"Rule name: '{name}', constraints: {constraints}")
+            
+            # Now ensure we've reached the end of the rule name
+            if not self._check(TokenType.EQUALS):
+                print(f"WARNING: Expected '=' after rule name, found {self._current().type} '{self._current().value}'")
+                self._print_token_context(5)
+                
+                # Try to recover - look ahead for an equals sign
+                self._skip_until_equals_or_rule_start()
+
+            self._skip_whitespace()
+
+            # Make sure we've found an equals sign after the rule name
+            self._consume(TokenType.EQUALS, "Expected '=' after rule name")
+
+            self._skip_whitespace()
+
+            print(f"Parsing value for rule '{name}'")
+            
+            # Parse the entire rule value, which may be a complex expression spanning multiple lines
+            value = self._parse_multiline_expression()
+            
+            # Make sure we skip any trailing whitespace after a rule
+            self._skip_whitespace()
+            
+            print(f"Completed parsing rule: '{name}'")
+
+            return Rule(name=name, value=value)
+        except Exception as e:
+            print(f"Exception in _parse_rule: {str(e)}")
+            raise
+    
+    def _skip_until_equals_or_rule_start(self):
+        """Skip tokens until we find an equals sign or the start of a new rule"""
+        print("Looking ahead for equals sign...")
+        max_lookahead = 50
+        saved_position = self.current
+        
+        for i in range(max_lookahead):
+            if self._is_at_end():
+                break
+                
+            if self._check(TokenType.EQUALS):
+                print(f"Found equals sign {i} tokens ahead")
+                return
+                
+            # If we find what looks like a new rule start, go back to saved position
+            if i > 0 and self._check(TokenType.OPEN_ANGLE) and self._check_rule_start():
+                print(f"Found new rule start {i} tokens ahead, reverting to original position")
+                self.current = saved_position
+                return
+                
+            self._advance()
+            
+        # If we didn't find anything useful, go back to starting position
+        print("Could not find equals sign or new rule start, reverting to original position")
+        self.current = saved_position
+    
+    def _extract_rule_name_and_constraints(self):
+        """Extract the rule name and any constraints from within angle brackets"""
+        print(f"Extracting rule name and constraints at position {self.current}")
+        name_parts = []
+        constraints = {}
+        found_constraint = False
+        
+        start_pos = self.current
+        
+        # Process tokens until we reach the closing angle bracket
         while not self._check(TokenType.CLOSE_ANGLE) and not self._is_at_end():
-            name_tokens.append(self._current().value)
+            current_token = self._current()
+            next_token = self._peek_next()
+            
+            print(f"  Processing token: {current_token.type} '{current_token.value}'")
+            
+            # If we find whitespace, skip it but preserve one space in the name
+            if self._check(TokenType.WHITESPACE):
+                if not found_constraint and name_parts and not name_parts[-1].endswith(' '):
+                    name_parts.append(' ')
+                self._advance()
+                continue
+            
+            # If we find an identifier followed by equals, it's a constraint
+            if (self._check(TokenType.IDENTIFIER) and 
+                next_token.type == TokenType.EQUALS):
+                
+                found_constraint = True
+                constraint_name = self._advance().value  # Consume the identifier
+                print(f"  Found constraint name: {constraint_name}")
+                
+                self._consume(TokenType.EQUALS, "Expected '=' after constraint name")
+                
+                # Handle negative numbers
+                negate = False
+                if self._check(TokenType.IDENTIFIER) and self._current().value == "-":
+                    negate = True
+                    self._advance()
+                
+                if self._check(TokenType.NUMBER):
+                    constraint_value = float(self._advance().value)
+                    if negate:
+                        constraint_value = -constraint_value
+                    constraints[constraint_name] = constraint_value
+                    print(f"  Set numeric constraint: {constraint_name}={constraint_value}")
+                elif self._check(TokenType.IDENTIFIER) or self._check(TokenType.STRING):
+                    constraint_value = self._advance().value
+                    constraints[constraint_name] = constraint_value
+                    print(f"  Set string constraint: {constraint_name}={constraint_value}")
+                else:
+                    print(f"  WARNING: Expected number or string for constraint value, found {self._current().type}")
+                    constraint_value = "ERROR"
+                    constraints[constraint_name] = constraint_value
+            else:
+                # If we haven't found any constraints yet, this is part of the name
+                if not found_constraint:
+                    name_parts.append(self._current().value)
+                else:
+                    print(f"  WARNING: Unexpected token in constraints: {self._current().type} '{self._current().value}'")
+                self._advance()
+        
+        self._consume(TokenType.CLOSE_ANGLE, "Expected '>' to close rule name")
+        name = ''.join(name_parts).strip()
+        
+        print(f"Extracted rule name: '{name}' with constraints: {constraints}")
+        return {'name': name, 'constraints': constraints}
+
+    def _skip_whitespace(self):
+        """Skip whitespace, comments, and newline tokens"""
+        while (not self._is_at_end() and 
+              (self._check(TokenType.WHITESPACE) or 
+               self._check(TokenType.COMMENT) or 
+               self._check(TokenType.NEWLINE))):
             self._advance()
 
-        name = ''.join(name_tokens)
-        self._consume(TokenType.CLOSE_ANGLE, "Expected '>' to close rule name")
-        print(f"Rule name: {name}")
-
-        self._skip_whitespace()
-
-        self._consume(TokenType.EQUALS, "Expected '=' after rule name")
-
-        self._skip_whitespace()
-
-        print(f"Parsing value for rule {name}")
-        value = self._parse_expression()
+    def _skip_multiline_whitespace(self):
+        """
+        Skip whitespace even across multiple lines, but be careful about rule boundaries.
+        This is essential for handling multi-line grammar definitions.
+        """
+        max_iterations = 100
+        iterations = 0
         
-        # Make sure we skip any trailing whitespace after a rule
-        self._skip_whitespace()
-        
-        print(f"Completed parsing rule: {name}")
+        while iterations < max_iterations and not self._is_at_end():
+            if self._match([TokenType.WHITESPACE, TokenType.COMMENT]):
+                iterations += 1
+                continue
+                
+            if self._match([TokenType.NEWLINE]):
+                # After a newline, check if the next non-whitespace is a new rule start
+                position = self.current
+                while (position < len(self.tokens) and 
+                       (self.tokens[position].type == TokenType.WHITESPACE or
+                        self.tokens[position].type == TokenType.COMMENT)):
+                    position += 1
+                    
+                # If we see a new rule start, stop skipping
+                if position < len(self.tokens) and self._check_token_at(TokenType.OPEN_ANGLE, position):
+                    if self._check_rule_start_at(position):
+                        break
+                
+                iterations += 1
+                continue
+                
+            break
+            
+        if iterations >= max_iterations:
+            print(f"WARNING: Possible infinite loop in _skip_multiline_whitespace")
 
-        return Rule(name=name, value=value)
+    def _check_rule_start(self):
+        """Check if we're at what appears to be the start of a new rule definition"""
+        if not self._check(TokenType.OPEN_ANGLE):
+            return False
+            
+        # Look ahead to see if this is likely a rule start
+        position = self.current + 1
+        found_close = False
+        
+        # Look for the closing angle bracket
+        while position < len(self.tokens) and not found_close:
+            if self.tokens[position].type == TokenType.CLOSE_ANGLE:
+                found_close = True
+                break
+            position += 1
+            
+        if not found_close:
+            return False
+            
+        # After the closing angle, look for an equals sign
+        position += 1
+        while position < len(self.tokens):
+            if self.tokens[position].type == TokenType.WHITESPACE or self.tokens[position].type == TokenType.NEWLINE:
+                position += 1
+                continue
+                
+            # If we find an equals sign, this is likely a rule definition
+            return self.tokens[position].type == TokenType.EQUALS
+            
+        return False
+
+    def _check_rule_start_at(self, position):
+        """Check if the given position appears to be a rule start"""
+        if position >= len(self.tokens) or self.tokens[position].type != TokenType.OPEN_ANGLE:
+            return False
+            
+        # Similar logic as _check_rule_start but starting at the given position
+        pos = position + 1
+        found_close = False
+        
+        while pos < len(self.tokens) and not found_close:
+            if self.tokens[pos].type == TokenType.CLOSE_ANGLE:
+                found_close = True
+                break
+            pos += 1
+            
+        if not found_close:
+            return False
+            
+        pos += 1
+        while pos < len(self.tokens):
+            if self.tokens[pos].type == TokenType.WHITESPACE or self.tokens[pos].type == TokenType.NEWLINE:
+                pos += 1
+                continue
+                
+            return self.tokens[pos].type == TokenType.EQUALS
+            
+        return False
+
+    def _check_token_at(self, token_type, position):
+        """Check if the token at the given position is of the specified type"""
+        if position >= len(self.tokens):
+            return False
+        return self.tokens[position].type == token_type
+
+    def _parse_multiline_expression(self):
+        """Parse a potentially multi-line expression that may include operators"""
+        print(f"Parsing multiline expression at position {self.current}")
+        
+        # First parse a single expression
+        left = self._parse_expression()
+        
+        # Skip any whitespace including newlines
+        self._skip_multiline_whitespace()
+        
+        # Check if we have a list of values with an operator
+        if (not self._is_at_end() and 
+            (self._check(TokenType.PIPE) or 
+             self._check(TokenType.DOUBLE_PIPE) or 
+             self._check(TokenType.DOUBLE_AMPERSAND))):
+            
+            operator = self._current().value
+            self._advance()  # Consume the operator
+            
+            values = [left]
+            
+            # Keep parsing expressions in the list
+            while not self._is_at_end():
+                self._skip_multiline_whitespace()
+                
+                # Break if we hit a rule boundary
+                if self._is_at_end() or (self._check(TokenType.OPEN_ANGLE) and self._check_rule_start()):
+                    break
+                    
+                # Parse the next value in the list
+                next_expr = self._parse_expression()
+                values.append(next_expr)
+                
+                # Skip whitespace after this value
+                self._skip_multiline_whitespace()
+                
+                # If there's no more of the same operator, we're done with this list
+                if not self._check(TokenType.PIPE if operator == '|' else
+                                 TokenType.DOUBLE_PIPE if operator == '||' else 
+                                 TokenType.DOUBLE_AMPERSAND):
+                    break
+                    
+                # Consume the operator
+                self._advance()
+            
+            print(f"Created value list with {len(values)} items and operator '{operator}'")
+            return ValueList(values=values, operator=operator)
+            
+        return left
 
     def _parse_expression(self):
-        """Parse a value expression, which could be a list of alternatives or a single value"""
-        print(f"Parsing expression at position {self.current}, token: {self._current().type}")
+        """Parse a standard expression (a term or combination)"""
+        print(f"Parsing expression at position {self.current}")
         
-        try:
-            left = self._parse_term()
-            
-            # Skip whitespace after parsing a term
-            self._skip_whitespace()
-    
-            if self._match([TokenType.PIPE, TokenType.DOUBLE_PIPE, TokenType.DOUBLE_AMPERSAND]):
-                operator = self._previous().value
-                values = [left]
-                
-                # Skip whitespace after the operator
-                self._skip_whitespace()
-    
-                max_iterations = 1000
-                iterations = 0
-    
-                while iterations < max_iterations:
-                    iterations += 1
-                    
-                    # Exit conditions - special handling for the end of an expression
-                    if self._is_at_end() or self._check(TokenType.EOF):
-                        break
-                    
-                    # Check for tokens that would indicate the end of the current expression
-                    # This includes closing brackets, parentheses, or the start of a new rule
-                    if self._check(TokenType.CLOSE_BRACKET) or self._check(TokenType.CLOSE_PAREN):
-                        break
-                    
-                    # Handle line breaks within expressions
-                    if self._check(TokenType.NEWLINE):
-                        # Skip newlines that don't end the current rule
-                        next_pos = self.current + 1
-                        while (next_pos < len(self.tokens) and
-                              (self.tokens[next_pos].type == TokenType.WHITESPACE or 
-                               self.tokens[next_pos].type == TokenType.COMMENT or
-                               self.tokens[next_pos].type == TokenType.NEWLINE)):
-                            next_pos += 1
-                        
-                        # If we see a new rule start (<...>), this newline ends the current rule
-                        if next_pos < len(self.tokens):
-                            if self.tokens[next_pos].type == TokenType.OPEN_ANGLE:
-                                break
-                            # If we see a closing bracket or similar, this might end the expression
-                            elif (self.tokens[next_pos].type == TokenType.CLOSE_BRACKET or
-                                  self.tokens[next_pos].type == TokenType.CLOSE_PAREN):
-                                break
-                        
-                        # Otherwise, treat newline as whitespace and continue
-                        self._advance()
-                        self._skip_whitespace()
-                        continue
-                    
-                    # Exit conditions for operators - if we don't see the proper operator, stop
-                    if ((operator == '|' and not self._check(TokenType.PIPE)) or
-                        (operator == '||' and not self._check(TokenType.DOUBLE_PIPE)) or
-                        (operator == '&&' and not self._check(TokenType.DOUBLE_AMPERSAND))):
-                        break
-    
-                    # Consume the operator
-                    if operator == '|':
-                        self._consume(TokenType.PIPE, "Expected '|'")
-                    elif operator == '||':
-                        self._consume(TokenType.DOUBLE_PIPE, "Expected '||'")
-                    else:
-                        self._consume(TokenType.DOUBLE_AMPERSAND, "Expected '&&'")
-                        
-                    self._skip_whitespace()
-                    values.append(self._parse_term())
-                    self._skip_whitespace()  # Skip whitespace after each term
-    
-                if iterations >= max_iterations:
-                    print(f"WARNING: Possible infinite loop in _parse_expression with operator {operator}")
-                    
-                return ValueList(values=values, operator=operator)
-            
-            return left
-        except Exception as e:
-            print(f"Error in _parse_expression: {str(e)}")
-            raise
+        # Create a simple literal or reference as a base
+        term = self._parse_term()
+        
+        return term
 
     def _parse_term(self):
-        """Parse a term which could be a reference, literal, function, etc."""
-        print(f"Parsing term at position {self.current}, token: {self._current().type}")
-        
-        if self._match([TokenType.OPEN_ANGLE]):
-            return self._parse_reference()
-        elif self._match([TokenType.OPEN_BRACKET]):
-            return self._parse_optional()
-        elif self._match([TokenType.OPEN_PAREN]):
-            return self._parse_group()
-        elif self._match([TokenType.IDENTIFIER, TokenType.STRING, TokenType.NUMBER]):
-            value = Literal(value=self._previous().value)
-            
-            # Check for repetition markers
-            if self._match([TokenType.QUESTION]):
-                return Optional(value=value)
-            elif self._match([TokenType.PLUS]):
-                return Repetition(value=value, min_occurrences=1, max_occurrences=None)
-            elif self._match([TokenType.ASTERISK]):
-                return Repetition(value=value, min_occurrences=0, max_occurrences=None)
-            elif self._match([TokenType.HASH]):
-                return Repetition(value=value, min_occurrences=1, max_occurrences=None, separator=',')
-            elif self._match([TokenType.OPEN_BRACE]):
-                return self._parse_count_repetition(value)
-            elif self._match([TokenType.CARET]):
-                return self._parse_directive(value)
-                
+        """Parse a basic term (reference, literal, etc.)"""
+        if self._check(TokenType.IDENTIFIER):
+            value = Literal(value=self._advance().value)
             return value
+        elif self._check(TokenType.STRING):
+            value = Literal(value=self._advance().value)
+            return value
+        elif self._check(TokenType.NUMBER):
+            value = Literal(value=self._advance().value)
+            return value
+        elif self._check(TokenType.OPEN_ANGLE):
+            # This is a reference to another rule
+            return self._parse_reference()
         else:
-            token = self._current()
-            print(f"Unexpected token: {token.type}, value: '{token.value}' at line {token.line}, column {token.column}")
-            self._error(f"Unexpected token: {token.type}")
+            # For debugging and recovery
+            current = self._current()
+            print(f"Warning: Unexpected token in term: {current.type} '{current.value}'")
             
+            # Return a placeholder
+            self._advance()  # Skip the problematic token
+            return Literal(value="ERROR")
+
     def _parse_reference(self):
-        """Parse a reference to another rule: <rule-name>"""
-        print(f"Parsing reference at position {self.current}")
+        """Parse a reference to another rule"""
+        self._consume(TokenType.OPEN_ANGLE, "Expected '<' to start reference")
         
         name_parts = []
         constraints = {}
         
-        # Build the reference name
+        # This flag helps distinguish between the rule name and constraints
+        reading_name = True
+        
+        # Parse the reference content
         while not self._check(TokenType.CLOSE_ANGLE) and not self._is_at_end():
+            # Skip any whitespace
             if self._match([TokenType.WHITESPACE]):
                 continue
                 
             # Check for constraints like min=0 or max=100
             if self._check(TokenType.IDENTIFIER) and self._peek_next().type == TokenType.EQUALS:
-                constraint_name = self._consume(TokenType.IDENTIFIER, "").value
+                reading_name = False  # We're now reading constraints
+                
+                constraint_name = self._advance().value
                 self._consume(TokenType.EQUALS, "Expected '=' after constraint name")
-                constraint_value = self._consume(TokenType.NUMBER, "Expected number value for constraint").value
-                constraints[constraint_name] = float(constraint_value)
-            else:
+                
+                # Handle negative numbers in constraints
+                negate = False
+                if self._match([TokenType.IDENTIFIER]) and self._previous().value == "-":
+                    negate = True
+                    
+                constraint_value = float(self._advance().value)
+                
+                if negate:
+                    constraint_value = -constraint_value
+                    
+                constraints[constraint_name] = constraint_value
+                
+            elif reading_name:
+                # Still reading the rule name part
                 name_parts.append(self._current().value)
+                self._advance()
+                
+            else:
+                # Unexpected token within constraints
+                print(f"Warning: Unexpected token in reference constraints: {self._current().type}")
                 self._advance()
                 
         self._consume(TokenType.CLOSE_ANGLE, "Expected '>' to close reference")
@@ -573,175 +819,43 @@ class Parser:
         
         return Reference(name=name, constraints=constraints)
 
-    def _parse_optional(self):
-        """Parse an optional group [...] that may span multiple lines and contain complex nested structures"""
-        print(f"Parsing optional group at position {self.current}")
-        
-        # Track nesting level of brackets to handle nested structures
-        bracket_level = 1  # We've already consumed the opening bracket
-        expression_tokens = []
-        start_position = self.current
-        
-        # First, collect all tokens until we find the matching closing bracket
-        max_iterations = 10000  # Safety mechanism
-        iterations = 0
-        
-        # Keep track of positions for debugging
-        line_nums = []
-        col_nums = []
-        
-        print(f"Searching for matching closing bracket for optional group...")
-        
-        # Skip any whitespace immediately inside the opening bracket
-        self._skip_whitespace()
-        
-        try:
-            # Parse the content inside the bracket as an expression
-            value = self._parse_expression()
-            
-            # Look for the closing bracket
-            self._skip_whitespace()
-            if self._match([TokenType.CLOSE_BRACKET]):
-                # Check for ? after brackets (which would be redundant but allowed)
-                self._match([TokenType.QUESTION])
-                return Optional(value=value)
-            else:
-                print(f"ERROR: Missing closing bracket for optional group, current token: {self._current().type} '{self._current().value}' at line {self._current().line}")
-                # Try to recover by returning what we have so far
-                return Optional(value=value)
-                
-        except Exception as e:
-            print(f"Error while parsing optional group: {str(e)}")
-            # Try to recover by skipping to the closing bracket or the next rule
-            self._recover_from_error()
-            # Create a dummy literal for recovery
-            return Optional(value=Literal(value="ERROR"))
-
-    def _parse_group(self):
-        """Parse a group (...)"""
-        value = self._parse_expression()
-        self._consume(TokenType.CLOSE_PAREN, "Expected ')' to close group")
-        return Group(value=value)
-        
-    def _parse_count_repetition(self, value):
-        """Parse repetition with count {n} or {n,m}"""
-        min_count = int(self._consume(TokenType.NUMBER, "Expected number for repetition count").value)
-        max_count = min_count
-        
-        if self._match([TokenType.COMMA]):
-            if self._match([TokenType.NUMBER]):
-                max_count = int(self._previous().value)
-            else:
-                max_count = None  # Unbounded
-                
-        self._consume(TokenType.CLOSE_BRACE, "Expected '}' to close repetition")
-        return Repetition(value=value, min_occurrences=min_count, max_occurrences=max_count)
-        
-    def _parse_directive(self, value):
-        """Parse a directive like ^WS or ^SORT"""
-        directive_name = self._consume(TokenType.IDENTIFIER, "Expected identifier after '^'").value
-        return Directive(name=directive_name, value=value)
-
-    def _skip_whitespace(self):
-        """Skip whitespace, comments, and handle newlines correctly"""
-        max_iterations = 1000
-        iterations = 0
-        
-        while iterations < max_iterations and not self._is_at_end():
-            # Handle whitespace and comments
-            if self._match([TokenType.WHITESPACE, TokenType.COMMENT]):
-                iterations += 1
-                continue
-                
-            # For newlines, we need to be more careful
-            if self._check(TokenType.NEWLINE):
-                # Need to look ahead to determine if this newline is part of whitespace
-                # or if it signals the end of a rule/structure
-                
-                # Check ahead for a new rule start or structure end
-                next_pos = self.current + 1
-                while (next_pos < len(self.tokens) and
-                      (self.tokens[next_pos].type == TokenType.WHITESPACE or 
-                       self.tokens[next_pos].type == TokenType.COMMENT)):
-                    next_pos += 1
-                    
-                # If the next non-whitespace token is a new rule start or structure end,
-                # don't consume this newline - it's a separator, not whitespace
-                if next_pos < len(self.tokens):
-                    token_type = self.tokens[next_pos].type
-                    if (token_type == TokenType.OPEN_ANGLE or 
-                        token_type == TokenType.CLOSE_BRACKET or 
-                        token_type == TokenType.CLOSE_PAREN):
-                        break
-                
-                # Otherwise, it's just whitespace within a multi-line rule
-                self._advance()  # Consume the newline
-                iterations += 1
-                continue
-                
-            # If we got here, we've found a non-whitespace token
-            break
-            
-        if iterations >= max_iterations:
-            print(f"WARNING: Possible infinite loop in _skip_whitespace")
-
-    def _recover_from_error(self):
-        """Attempt to recover from a parsing error by finding a safe point to continue"""
-        print("Attempting to recover from parsing error...")
-        
-        # Strategy: Skip tokens until we find the end of the current rule or structure
-        recovery_tokens = [TokenType.CLOSE_BRACKET, TokenType.CLOSE_PAREN, TokenType.NEWLINE]
-        
-        # Skip until we find a recovery point
-        while not self._is_at_end():
-            if any(self._check(type) for type in recovery_tokens):
-                self._advance()  # Consume the recovery token
-                print(f"Recovered at token: {self._previous().type}")
-                break
-            
-            # Also try to recover by finding the start of the next rule
-            next_pos = self.current + 1
-            found_rule_start = False
-            while next_pos < len(self.tokens):
-                if self.tokens[next_pos].type == TokenType.OPEN_ANGLE:
-                    found_rule_start = True
-                    break
-                next_pos += 1
-                
-            if found_rule_start:
-                self.current = next_pos - 1  # Position just before the rule start
-                print(f"Recovered by finding next rule at position {next_pos}")
-                break
-                
-            self._advance()
-            
-        print(f"Recovery complete, now at token: {self._current().type} at position {self.current}")
-
-    def _advance(self):
-        if not self._is_at_end():
-            self.current += 1
-        return self._previous()
-
     def _is_at_end(self):
-        return self._current().type == TokenType.EOF
+        """Check if we've reached the end of the token stream"""
+        return self.current >= len(self.tokens) or self._current().type == TokenType.EOF
 
     def _current(self):
+        """Return the current token"""
+        if self.current >= len(self.tokens):
+            return self.tokens[-1]  # Return EOF token if we're past the end
         return self.tokens[self.current]
 
     def _previous(self):
+        """Return the previous token"""
+        if self.current <= 0:
+            return self.tokens[0]  # Return first token if we're at the beginning
         return self.tokens[self.current - 1]
-
-    def _peek_next(self):
-        if self.current + 1 >= len(self.tokens):
-            return self.tokens[-1]
-        return self.tokens[self.current + 1]
-
+        
+    def _advance(self):
+        """Move to the next token and return the previous one"""
+        prev = self._current()
+        if not self._is_at_end():
+            self.current += 1
+        return prev
+        
     def _check(self, type):
+        """Check if the current token is of the given type"""
         if self._is_at_end():
             return False
         return self._current().type == type
-
+        
+    def _peek_next(self):
+        """Return the next token without consuming it"""
+        if self.current + 1 >= len(self.tokens):
+            return self.tokens[-1]  # Return EOF token if we're past the end
+        return self.tokens[self.current + 1]
+        
     def _match(self, types):
+        """Check if the current token matches any of the given types and advance if true"""
         for type in types:
             if self._check(type):
                 self._advance()
@@ -749,13 +863,16 @@ class Parser:
         return False
 
     def _consume(self, type, message):
+        """Modified consume method with better error reporting"""
         if self._check(type):
             return self._advance()
-        self._error(message)
-
-    def _error(self, message):
+        
         token = self._current()
-        raise SyntaxError(f"{message} at line {token.line}, column {token.column}")
+        error_msg = f"{message} at line {token.line}, column {token.column}"
+        print(f"ERROR: {error_msg}")
+        print(f"Expected {type.name}, but found {token.type.name} '{token.value}'")
+        self._print_token_context(5)
+        raise SyntaxError(error_msg)
 
 
 def parse_css_grammar(file_path):

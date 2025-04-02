@@ -11,3 +11,4 @@ Testing
 examples
 test
 *.pyc
+utils/lexbor/css/grammar.generated.txt
