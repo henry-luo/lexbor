@@ -1,0 +1,13 @@
+
+<border-radius> = <length-percentage min=0>{1,4} [ / <length-percentage min=0>{1,4} ]?
+<border-top-left-radius> = <length-percentage min=0> <length-percentage min=0>?
+<border-top-right-radius> = <length-percentage min=0> <length-percentage min=0>?
+<border-bottom-right-radius> = <length-percentage min=0> <length-percentage min=0>?
+<border-bottom-left-radius> = <length-percentage min=0> <length-percentage min=0>?
+
+<border-image-source> = none | <image>
+<border-image-slice> = [<number min=0> | <percentage min=0>]{1,4} && fill?
+<border-image-width> = [ <length min=0> | <percentage min=0> | <number min=0> | auto ]{1,4}
+<border-image-outset> = [ <length min=0> | <number min=0> ]{1,4}
+<border-image-repeat> = [ stretch | repeat | round | space ]{1,2}
+<border-image> = <border-image-source> || <border-image-slice> [ / <border-image-width>? [ / <border-image-outset> ]? ]? || <border-image-repeat>

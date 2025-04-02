@@ -73,7 +73,8 @@ module.exports = grammar({
     literal: $ => token(choice(
       /[a-zA-Z0-9-_]+/,
       seq('"', /[^"]*/, '"'),
-      seq("'", /[^']*/, "'")
+      seq("'", /[^']*/, "'"),
+      '#', '/'
     )),
 
     // Simplified reference with no permission handling

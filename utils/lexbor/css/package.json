@@ -1,1 +1,10 @@
-{"name":"tree-sitter-css-grammar","version":"0.1.0","description":"CSS Grammar parser","main":"bindings/node","dependencies":{"nan":"^2.14.0","tree-sitter":"^0.22.4"},"devDependencies":{"tree-sitter-cli":"^0.25.3"},"scripts":{"build":"tree-sitter generate","test":"tree-sitter test"}}
+{"name":"tree-sitter-css-grammar",
+"version":"0.1.0",
+"description":"CSS Grammar parser",
+"main":"bindings/node",
+"dependencies":{"nan":"^2.14.0","tree-sitter":"^0.22.4"},
+"devDependencies":{"tree-sitter-cli":"^0.25.3"},
+"scripts":{
+    "generate":"tree-sitter generate",
+    "parse":"tree-sitter parse grammar.txt"
+}}

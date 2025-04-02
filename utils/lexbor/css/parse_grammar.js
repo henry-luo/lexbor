@@ -4,58 +4,6 @@ const fs = require('fs');
 const path = require('path');
 const { spawn, execSync } = require('child_process');
 
-// Import the grammar
-const grammar = require('./grammar');
-
-// Set up Tree-sitter parser
-async function setupParser() {
-  const Parser = require('tree-sitter');
-  
-  // Create directory for tree-sitter grammar if it doesn't exist
-  const grammarDir = path.join(__dirname, 'tree-sitter-css-grammar');
-  if (!fs.existsSync(grammarDir)) {
-    fs.mkdirSync(grammarDir, { recursive: true });
-  }
-  
-  // Copy grammar.js file to the tree-sitter directory
-  fs.writeFileSync(
-    path.join(grammarDir, 'grammar.js'),
-    fs.readFileSync(path.join(__dirname, 'grammar.js'), 'utf8')
-  );
-  
-  // Create package.json
-  const packageJson = {
-    name: 'tree-sitter-css-grammar',
-    version: '0.1.0',
-    description: 'CSS Grammar parser',
-    main: 'bindings/node',
-    dependencies: {
-      nan: '^2.14.0'
-    },
-    devDependencies: {
-      'tree-sitter-cli': '^0.20.0'
-    }
-  };
-  
-  fs.writeFileSync(
-    path.join(grammarDir, 'package.json'),
-    JSON.stringify(packageJson, null, 2)
-  );
-  
-  // Install dependencies and generate parser
-  console.log('Installing dependencies and generating parser...');
-  execSync('npm install', { cwd: grammarDir, stdio: 'inherit' });
-  execSync('npx tree-sitter generate', { cwd: grammarDir, stdio: 'inherit' });
-  
-  // Load the parser
-  const language = await Parser.Language.load(path.join(grammarDir, 'build/Release/tree_sitter_css_grammar_binding.node'));
-  
-  const parser = new Parser();
-  parser.setLanguage(language);
-  
-  return parser;
-}
-
 // Convert Tree-sitter nodes to AST
 function parseToAst(node, sourceCode) {
   if (node.type === 'rule_definition') {
@@ -251,10 +199,104 @@ function parseToAst(node, sourceCode) {
   }
 }
 
+async function invokeParser() {
+  return {
+    parse: function(sourceCode) {
+      // Create a temporary file if we're parsing from a string
+      const tempFile = path.join(__dirname, 'grammar.txt');
+      fs.writeFileSync(tempFile, sourceCode);
+      
+      try {
+        console.log('Invoking tree-sitter parse command...');
+        
+        // Get the S-expression output from tree-sitter CLI
+        const sexpOutput = execSync('npx tree-sitter parse grammar.txt', {
+          cwd: __dirname,
+          encoding: 'utf8'
+        });
+        
+        // Convert S-expression to a node structure
+        const rootNode = parseSExpression(sexpOutput);
+        
+        return {
+          rootNode: rootNode
+        };
+      } catch (error) {
+        console.error('Error running tree-sitter parse command:', error);
+        throw error;
+      }
+    }
+  };
+}
+
+// Parse the S-expression output from tree-sitter into a node structure
+function parseSExpression(sexp) {
+  // Basic implementation to convert S-expression to a node-like structure
+  // This is a simplified version and might need adjustments
+  
+  // Strip ANSI color codes which tree-sitter CLI might include
+  sexp = sexp.replace(/\x1B\[\d+m/g, '');
+  
+  // Extract node type and range info from the S-expression
+  const match = sexp.match(/\((\w+)(?:\s+\[(\d+), (\d+)\] - \[(\d+), (\d+)\])?/);
+  
+  if (!match) {
+    return null;
+  }
+  
+  const nodeType = match[1];
+  const startPos = match[2] ? parseInt(match[2]) : 0;
+  const startCol = match[3] ? parseInt(match[3]) : 0;
+  const endPos = match[4] ? parseInt(match[4]) : 0;
+  const endCol = match[5] ? parseInt(match[5]) : 0;
+  
+  // Build a structure that mimics tree-sitter's Node API
+  const node = {
+    type: nodeType,
+    startIndex: startPos,
+    endIndex: endPos,
+    children: [],
+    
+    child: function(index) {
+      return this.children[index] || null;
+    },
+    
+    get childCount() {
+      return this.children.length;
+    }
+  };
+  
+  // Find child nodes by parsing nested S-expressions
+  // This is a simplified approach and may need improvement
+  let depth = 0;
+  let start = -1;
+  
+  for (let i = 0; i < sexp.length; i++) {
+    if (sexp[i] === '(') {
+      depth++;
+      if (depth === 2) {
+        start = i;
+      }
+    } else if (sexp[i] === ')') {
+      if (depth === 2 && start !== -1) {
+        const childSexp = sexp.substring(start, i + 1);
+        const childNode = parseSExpression(childSexp);
+        if (childNode) {
+          node.children.push(childNode);
+        }
+        start = -1;
+      }
+      depth--;
+    }
+  }
+  
+  return node;
+}
+
 async function main() {
   // Define file paths
   const grammarFile = path.join(__dirname, 'grammar.txt');
-  const outputFile = path.join(__dirname, 'grammar.json');
+  const outputFile = path.join(__dirname, 'grammar.output.json');
   
   // Ensure the grammar file exists
   if (!fs.existsSync(grammarFile)) {
@@ -264,7 +306,7 @@ async function main() {
   
   try {
     console.log(`Parsing grammar from ${grammarFile}...`);
-    const parser = await setupParser();
+    const parser = await invokeParser();
     
     // Read the grammar file
     const sourceCode = fs.readFileSync(grammarFile, 'utf8');
