@@ -139,15 +139,14 @@ base_styles = {
 
     "border-style": {"values": ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"], 
         "initial": "&(lxb_css_property_border_style_t) {.top = LXB_CSS_BORDER_STYLE_NONE, .right = LXB_CSS_BORDER_STYLE_NONE, .bottom = LXB_CSS_BORDER_STYLE_NONE, .left = LXB_CSS_BORDER_STYLE_NONE}"},
-    
-    # "border-top-style": {"values": ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"], 
-    #     "initial": "&(lxb_css_property_visibility_t) {.type = LXB_CSS_BORDER_STYLE_NONE}"},
-    # "border-right-style": {"values": ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"], 
-    #     "initial": "&(lxb_css_property_visibility_t) {.type = LXB_CSS_BORDER_STYLE_NONE}"},
-    # "border-bottom-style": {"values": ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"], 
-    #     "initial": "&(lxb_css_property_visibility_t) {.type = LXB_CSS_BORDER_STYLE_NONE}"},
-    # "border-left-style": {"values": ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"], 
-    #     "initial": "&(lxb_css_property_visibility_t) {.type = LXB_CSS_BORDER_STYLE_NONE}"},
+    "border-top-style": {"values": ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"], 
+        "initial": "&(lxb_css_property_border_top_style_t) {.type = LXB_CSS_BORDER_STYLE_NONE}"},
+    "border-right-style": {"values": ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"], 
+        "initial": "&(lxb_css_property_border_right_style_t) {.type = LXB_CSS_BORDER_STYLE_NONE}"},
+    "border-bottom-style": {"values": ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"], 
+        "initial": "&(lxb_css_property_border_bottom_style_t) {.type = LXB_CSS_BORDER_STYLE_NONE}"},
+    "border-left-style": {"values": ["none", "hidden", "dotted", "dashed", "solid", "double", "groove", "ridge", "inset", "outset"], 
+        "initial": "&(lxb_css_property_border_left_style_t) {.type = LXB_CSS_BORDER_STYLE_NONE}"},
 
     "border-top-color": {"values": [], "initial": "&(lxb_css_property_border_top_color_t) {.type = LXB_CSS_COLOR_CURRENTCOLOR}"},
     "border-right-color": {"values": [], "initial": "&(lxb_css_property_border_right_color_t) {.type = LXB_CSS_COLOR_CURRENTCOLOR}"},

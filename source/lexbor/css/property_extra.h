@@ -36,12 +36,6 @@ typedef enum {
 }
 lxb_css_background_position_type_t;
 
-// typedef enum {
-//     LXB_CSS_BOX_SHADOW_INSET,
-//     LXB_CSS_BOX_SHADOW__LAST_ENTRY
-// }
-// lxb_css_box_shadow_type_t;
-
 typedef struct {
     lxb_css_value_type_t type;
     lxb_css_value_color_t *values;
@@ -54,10 +48,10 @@ LXB_API void *lxb_css_property_box_shadow_destroy(lxb_css_memory_t *memory, void
 LXB_API lxb_status_t lxb_css_property_box_shadow_serialize(const void *style, lexbor_serialize_cb_f cb, void *ctx);
 
 typedef struct {
-    lxb_css_value_length_percentage_t top;
-    lxb_css_value_length_percentage_t right;
-    lxb_css_value_length_percentage_t bottom;
-    lxb_css_value_length_percentage_t left;
+    lxb_css_value_length_percentage_t top_left;
+    lxb_css_value_length_percentage_t top_right;
+    lxb_css_value_length_percentage_t bottom_right;
+    lxb_css_value_length_percentage_t bottom_left;
 } lxb_css_property_border_radius_t;
 
 LXB_API void *lxb_css_property_border_radius_create(lxb_css_memory_t *memory);

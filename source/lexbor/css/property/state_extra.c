@@ -50,7 +50,7 @@ bool lxb_css_property_state_box_shadow(lxb_css_parser_t *parser, const lxb_css_s
     // return lxb_css_parser_state_element_return_to_parent;
 }
 
-LXB_API bool lxb_css_property_state_border_radius(lxb_css_parser_t *parser, lxb_css_syntax_token_t *token, void *ctx) {
+bool lxb_css_property_state_border_radius(lxb_css_parser_t *parser, const lxb_css_syntax_token_t *token, void *ctx) {
     lxb_css_rule_declaration_t *declar = ctx;
     lxb_css_value_type_t type;
     lxb_css_value_length_percentage_t *prop;
@@ -58,16 +58,16 @@ LXB_API bool lxb_css_property_state_border_radius(lxb_css_parser_t *parser, lxb_
 NEXT:
     switch (state) {
     case 1:
-        prop = &declar->u.border_radius->top;
+        prop = &declar->u.border_radius->top_left;
         break;
     case 2:
-        prop = &declar->u.border_radius->right;
+        prop = &declar->u.border_radius->top_right;
         break;
     case 3:
-        prop = &declar->u.border_radius->bottom;
+        prop = &declar->u.border_radius->bottom_right;
         break;
     case 4:
-        prop = &declar->u.border_radius->left;
+        prop = &declar->u.border_radius->bottom_left;
         break;
     default:
         return lxb_css_parser_failed(parser);
