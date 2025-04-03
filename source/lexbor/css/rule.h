@@ -207,6 +207,7 @@ struct lxb_css_rule_declaration {
         lxb_css_property_border_right_style_t    *border_right_style;
         lxb_css_property_border_bottom_style_t   *border_bottom_style;
         lxb_css_property_border_left_style_t     *border_left_style;
+        lxb_css_property_border_radius_t         *border_radius;
         void                                     *user;
     } u;
 

@@ -3242,8 +3242,7 @@ LXB_API lxb_status_t lxb_css_property_cursor_serialize(const void *style,
 /* Border-style. */
 
 LXB_API void *
-lxb_css_property_border_style_create(lxb_css_memory_t *memory)
-{
+lxb_css_property_border_style_create(lxb_css_memory_t *memory) {
     return lexbor_mraw_calloc(memory->mraw, sizeof(lxb_css_property_border_style_t));
 }
 

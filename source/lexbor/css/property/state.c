@@ -92,7 +92,7 @@ lxb_css_property_state_length(lxb_css_parser_t *parser,
     return true;
 }
 
-static bool
+bool
 lxb_css_property_state_length_percentage(lxb_css_parser_t *parser,
                                          const lxb_css_syntax_token_t *token,
                                          lxb_css_value_length_percentage_t *lp)

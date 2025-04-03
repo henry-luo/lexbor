@@ -4,21 +4,7 @@
  * Do not edit manually!
  */
 
-#ifndef LEXBOR_CSS_PROPERTY_STATE_EXTRA_H
-#define LEXBOR_CSS_PROPERTY_STATE_EXTRA_H
-
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "lexbor/css/parser.h"
 
 LXB_API bool lxb_css_property_state_box_shadow(lxb_css_parser_t *parser, const lxb_css_syntax_token_t *token, void *ctx);
-
-#ifdef __cplusplus
-}
-#endif
-
-#endif /* LEXBOR_CSS_PROPERTY_STATE_EXTRA_H */
-
 LXB_API bool lxb_css_property_state_border_radius(lxb_css_parser_t *parser, lxb_css_syntax_token_t *token, void *ctx);

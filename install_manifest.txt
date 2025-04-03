@@ -30,6 +30,8 @@
 /usr/local/include/lexbor/core/base.h
 /usr/local/include/lexbor/css/unit/res.h
 /usr/local/include/lexbor/css/unit/const.h
+/usr/local/include/lexbor/css/property_extra.h
+/usr/local/include/lexbor/css/property/state_extra.h
 /usr/local/include/lexbor/css/property/res.h
 /usr/local/include/lexbor/css/property/state.h
 /usr/local/include/lexbor/css/property/const.h
@@ -72,6 +74,7 @@
 /usr/local/include/lexbor/css/at_rule/res.h
 /usr/local/include/lexbor/css/at_rule/state.h
 /usr/local/include/lexbor/css/at_rule/const.h
+/usr/local/include/lexbor/css/property/state_extra.h
 /usr/local/include/lexbor/css/property/res.h
 /usr/local/include/lexbor/css/property/state.h
 /usr/local/include/lexbor/css/property/const.h

@@ -1,10 +1,9 @@
-/*
- * Copyright (C) 2023 Alexander Borisov
- *
- * Author: Alexander Borisov <borisov@lexbor.com>
- */
+#ifdef __cplusplus
+#define __STDC_LIMIT_MACROS
+#define __STDC_CONSTANT_MACROS
 
-/* Enumeration definitions */
+extern "C" {
+#endif
 
 typedef enum {
     LXB_CSS_BACKGROUND_CLIP_BORDER_BOX,
@@ -43,10 +42,6 @@ lxb_css_background_position_type_t;
 // }
 // lxb_css_box_shadow_type_t;
 
-/* Struct definitions */
-
-/* Struct definitions */
-
 typedef struct {
     lxb_css_value_type_t type;
     lxb_css_value_color_t *values;
@@ -54,16 +49,9 @@ typedef struct {
 }
 lxb_css_property_box_shadow_t;
 
-/* Function prototypes */
-
-LXB_API void *
-lxb_css_property_box_shadow_create(lxb_css_memory_t *memory);
-LXB_API void *
-lxb_css_property_box_shadow_destroy(lxb_css_memory_t *memory,
-                                     void *style, bool self_destroy);
-LXB_API lxb_status_t
-lxb_css_property_box_shadow_serialize(const void *style,
-                                       lexbor_serialize_cb_f cb, void *ctx);
+LXB_API void *lxb_css_property_box_shadow_create(lxb_css_memory_t *memory);
+LXB_API void *lxb_css_property_box_shadow_destroy(lxb_css_memory_t *memory, void *style, bool self_destroy);
+LXB_API lxb_status_t lxb_css_property_box_shadow_serialize(const void *style, lexbor_serialize_cb_f cb, void *ctx);
 
 typedef struct {
     lxb_css_value_length_percentage_t top;
@@ -72,6 +60,10 @@ typedef struct {
     lxb_css_value_length_percentage_t left;
 } lxb_css_property_border_radius_t;
 
-/* Struct definitions */
+LXB_API void *lxb_css_property_border_radius_create(lxb_css_memory_t *memory);
+LXB_API void *lxb_css_property_border_radius_destroy(lxb_css_memory_t *memory, void *style, bool self_destroy);
+LXB_API lxb_status_t lxb_css_property_border_radius_serialize(const void *style, lexbor_serialize_cb_f cb, void *ctx);
 
-/* Function prototypes */
+#ifdef __cplusplus
+} /* extern "C" */
+#endif
